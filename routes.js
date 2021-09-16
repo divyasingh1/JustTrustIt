@@ -38,6 +38,21 @@ function routes(app, dbe, lms, accounts){
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
+    app.post('/createProduct', async (req,res)=>{
+        
+        let {name,description,uuid,manufacturerName} = req.body
+        if(name && description && uuid && manufacturerName){
+            lms.createProduct(name, description,uuid,manufacturerName, {from: "0x86C9A6f5E1737695788505889F6eD4A244eAFF6F"})
+            .then((_hash, _address)=>{
+                res.json({"status":"success", _hash, _address})
+            })
+            .catch(err=>{
+                res.status(500).json({"status":"Failed", "reason":"createProduct error occured", err})
+            })
+        }else{
+            res.status(400).json({"status":"Failed", "reason":"wrong input"})
+        }
+    })
     app.post('/addManufacturer', async (req,res)=>{
         let license = req.body.license
         let address = req.body.address
@@ -67,25 +82,21 @@ function routes(app, dbe, lms, accounts){
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
-    app.get('/access/:email/:id', (req,res)=>{
-      let id = req.params.id
-        if(req.params.id && req.params.email){
-            db.findOne({email:req.params.email},(err,doc)=>{
-                if(doc){
-                    lms.getHash(id, {from: accounts[0]})
-                    .then(async(hash)=>{
-                        let data = await ipfs.files.get(hash)
-                        console.log("data:::", data)
-                        res.json({"status":"success", data: data})
-                    })
-                }else{
-                    res.status(400).json({"status":"Failed", "reason":"wrong input"})
-                }
+
+    app.get('/getProductByProductId/:uuid', (req,res)=>{
+        if(req.params.uuid){
+            lms.getProductByProductId(req.params.uuid, {from: accounts[0]})
+            .then(async(hash, data)=>{
+                res.json({"status":"success", hash: hash, data})
+            })
+            .catch(err=>{
+                res.status(500).json({"status":"Failed", "reason":"getProductByProductId error occured", err})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
+        
 }
 
 module.exports = routes
