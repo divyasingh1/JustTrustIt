@@ -31,4 +31,4 @@ truffle test
 
 npm run start
 
-visit: http://localhost:8082
+base url: http://localhost:8082
