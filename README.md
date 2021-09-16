@@ -31,4 +31,4 @@ truffle test
 
 npm run start
 
-visit: http://localhost:<PORT>.com
+visit: http://localhost:8082.com
