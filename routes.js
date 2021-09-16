@@ -38,21 +38,17 @@ function routes(app, dbe, lms, accounts){
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
-    app.post('/upload', async (req,res)=>{
-        let buffer = req.body.buffer
-        let name = req.body.name
-        let title = req.body.title
+    app.post('/addManufacturer', async (req,res)=>{
+        let license = req.body.license
+        let address = req.body.address
         let id = shortid.generate() + shortid.generate()
-        if(buffer && title){
-            let ipfsHash = await ipfs.add(Buffer.from(buffer))
-            let hash = ipfsHash[0].hash
-            lms.sendIPFS(id, hash, {from: accounts[0]})
-            .then((_hash, _address)=>{
-                music.insertOne({id,hash, title,name})
+        if(license && address){
+            lms.addManufacturer(address, license, {from: accounts[0]})
+            .then(()=>{
                 res.json({"status":"success", id})
             })
             .catch(err=>{
-                res.status(500).json({"status":"Failed", "reason":"Upload error occured"})
+                res.status(500).json({"status":"Failed", "reason":"addManufacturer error occured"})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
