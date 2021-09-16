@@ -25,7 +25,7 @@ truffle migrate
 
 truffle test
 
-----I don't have any, please write then for me :P
+----I don't have any, please write them for me :P
 
 --to run nodejs application
 
