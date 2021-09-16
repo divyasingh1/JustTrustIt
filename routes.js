@@ -53,6 +53,23 @@ function routes(app, dbe, lms, accounts){
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
+
+    app.post('/transferProduct', async (req,res)=>{
+        
+        let {addressTo,uuid} = req.body
+        if(addressTo && uuid){
+            lms.transferProduct(addressTo,uuid, {from: "0x86C9A6f5E1737695788505889F6eD4A244eAFF6F"})
+            .then((_hash, _address)=>{
+                res.json({"status":"success", _hash, _address})
+            })
+            .catch(err=>{
+                res.status(500).json({"status":"Failed", "reason":"transferProduct error occured", err})
+            })
+        }else{
+            res.status(400).json({"status":"Failed", "reason":"wrong input"})
+        }
+    })
+
     app.post('/addManufacturer', async (req,res)=>{
         let license = req.body.license
         let address = req.body.address
@@ -97,6 +114,19 @@ function routes(app, dbe, lms, accounts){
         }
     })
         
+    app.get('/isOwnerOf/:address/:uuid', (req,res)=>{
+        if(req.params.uuid && req.params.address){
+            lms.isOwnerOf(req.params.address, req.params.uuid, {from: accounts[0]})
+            .then(async(hash, data)=>{
+                res.json({"status":"success", hash: hash, data})
+            })
+            .catch(err=>{
+                res.status(500).json({"status":"Failed", "reason":"isOwnerOf error occured", err})
+            })
+        }else{
+            res.status(400).json({"status":"Failed", "reason":"wrong input"})
+        }
+    })
 }
 
 module.exports = routes
