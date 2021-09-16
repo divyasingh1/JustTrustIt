@@ -44,24 +44,24 @@ function routes(app, dbe, lms, accounts){
         let id = shortid.generate() + shortid.generate()
         if(license && address){
             lms.addManufacturer(address, license, {from: accounts[0]})
-            .then(()=>{
-                res.json({"status":"success", id})
+            .then((_hash, _address)=>{
+                res.json({"status":"success", _hash, _address})
             })
             .catch(err=>{
-                res.status(500).json({"status":"Failed", "reason":"addManufacturer error occured"})
+                res.status(500).json({"status":"Failed", "reason":"addManufacturer error occured", err})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
-    app.get('/access/:email', (req,res)=>{
-        if(req.params.email){
-            db.findOne({email: req.params.email}, (err,doc)=>{
-                if(doc){
-                    let data = music.find().toArray()
-                    console.log("data", data)
-                    res.json({"status":"success", data})
-                }
+    app.get('/getManufacturar/:address', (req,res)=>{
+        if(req.params.address){
+            lms.getManufacturar(req.params.address, {from: accounts[0]})
+            .then(async(hash, data)=>{
+                res.json({"status":"success", hash: hash, data})
+            })
+            .catch(err=>{
+                res.status(500).json({"status":"Failed", "reason":"getManufacturar error occured", err})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
