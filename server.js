@@ -5,7 +5,7 @@ const routes = require('./routes')
 const Web3 = require('web3');
 const mongodb = require('mongodb').MongoClient
 const contract = require('truffle-contract');
-const artifacts = require('./build/Inbox.json');
+const artifacts = require('./build/trustedProperties.json');
 app.use(express.json())
 if (typeof web3 !== 'undefined') {
     var web3 = new Web3(web3.currentProvider)
