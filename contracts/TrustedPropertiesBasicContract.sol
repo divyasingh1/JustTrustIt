@@ -151,7 +151,7 @@ contract TrustedPropertiesBasicRentContract is Ownable {
 
         uint debit_amount = contracts[contract_id].security_deposit;
 
-        contracts[contract_id].remaining_security_deposit = debit_amount;
+        contracts[contract_id].remaining_security_deposit = (debit_amount - contractTransactionFee);
 		contracts[contract_id].status = AgreementStatus.Active;
 
 
@@ -181,7 +181,11 @@ contract TrustedPropertiesBasicRentContract is Ownable {
 
         contracts[contract_id].remaining_payments -= 1;
         if (contracts[contract_id].remaining_payments == 0) {
+            // Contract over
 		    contracts[contract_id].status = AgreementStatus.Completed;
+
+		    // Refund security deposit to the Tenant
+		    balances[contracts[contract_id].tenant] += contracts[contract_id].remaining_security_deposit;
         }
 
         uint debit_amount = contracts[contract_id].rent_amount;
@@ -245,4 +249,3 @@ contract TrustedPropertiesBasicRentContract is Ownable {
     }
 
 }
-
