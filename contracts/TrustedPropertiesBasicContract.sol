@@ -89,6 +89,9 @@ contract TrustedPropertiesBasicRentContract is Ownable {
 	mapping (address => uint) private balances;
 
 
+
+	// ----------------- EVENTS --------------------------------------
+
 	/// Notify whenever a contract is added
     /// @param contract_id ID of the contract
     event ContractAdded(uint contract_id);
@@ -111,6 +114,48 @@ contract TrustedPropertiesBasicRentContract is Ownable {
     /// @param contract_id ID of the contract
     event ExtraAmountRefunded(uint contract_id, uint amount);
 
+    /// Notify whenever a request to extend the contract duration is made by the tenant
+    /// @param contract_id ID of the contract
+    /// @param extension_duration The number of months for which thetenant wants to extend the contract
+    event ContractDurationExtensionRequested(uint contract_id, uint8 extension_duration);
+
+    /// Notify whenever a request to extend the contract duration is confirmed by the owner
+    /// @param contract_id ID of the contract
+    /// @param extension_duration The number of months for which the contract is extended
+    event ContractDurationExtended(uint contract_id, uint8 extension_duration);
+
+
+
+	// ----------------- MODIFIERS --------------------------------------
+
+    modifier contractExists(uint contract_id) {
+        require(contracts[contract_id].doesExist, "Contract does not exist");
+        _;
+    }
+
+    modifier contractDoesNotExist(uint contract_id) {
+        require(!contracts[contract_id].doesExist, "Contract already exists");
+        _;
+    }
+
+    modifier ownerOnly(uint contract_id) {
+        require(msg.sender == contracts[contract_id].owner, "Only the registered property owner is allowed to do this");
+        _;
+    }
+
+    modifier tenantOnly(uint contract_id) {
+        require(msg.sender == contracts[contract_id].tenant, "Only the registered tenant is allowed to do this");
+        _;
+    }
+
+    modifier activeContractOnly(uint contract_id) {
+        require(contracts[contract_id].status == AgreementStatus.Active, "This is only allowed for active contracts");
+        _;
+    }
+
+
+
+	// ----------------- METHODS --------------------------------------
 
     constructor (uint trxnFee) {
         contractTransactionFee = trxnFee;
@@ -118,17 +163,25 @@ contract TrustedPropertiesBasicRentContract is Ownable {
 
 
     /// Initialize RentContract by the owner
-    function initializeRentContract(uint contract_id, string memory property_id, address tenant, uint security_deposit, uint rent_amount, uint8 duration, string memory start_date) public {
-        address owner = msg.sender;
+    function initializeRentContract(
+        uint contract_id,
+        string memory property_id,
+        address tenant,
+        uint security_deposit,
+        uint rent_amount,
+        uint8 duration,
+        string memory start_date
+    )
+    public
+    contractDoesNotExist(contract_id) {
 
-        require(contracts[contract_id].doesExist != true, "Contract already exists");
         require(rent_amount > contractTransactionFee, "Rent can't be less than fee!");
 
         contracts[contract_id] = RentContract({
             doesExist: true,
             property_id: property_id,
             status: AgreementStatus.DepositPending,
-            owner: owner,
+            owner: msg.sender,
             tenant: tenant,
             security_deposit: security_deposit,
             rent_amount: rent_amount,
@@ -145,12 +198,14 @@ contract TrustedPropertiesBasicRentContract is Ownable {
 
     /// Deposit the security amount from tenant to owner
     /// @param contract_id The id of the contract to deposit security amount for
-    function depositSecurity(uint contract_id) public payable {
+    function depositSecurity(uint contract_id)
+    public
+    payable
+    contractExists(contract_id)
+    tenantOnly(contract_id) {
 
         // RentContract contract = contracts[contract_id];
 
-        require(contracts[contract_id].doesExist == true, "Contract doesn't exist");
-        require(msg.sender == contracts[contract_id].tenant, "Only the registered tenant can deposit security amount");
         require(contracts[contract_id].status == AgreementStatus.DepositPending, "Security already deposited");
         require(msg.value >= contracts[contract_id].security_deposit, "Insufficient security deposit amount");
 
@@ -175,15 +230,17 @@ contract TrustedPropertiesBasicRentContract is Ownable {
 
 
     /// Deposit the security amount from tenant to owner
-    /// @param contract_id The id of the contract to to pay rent for
+    /// @param contract_id The id of the contract to pay rent for
     /// @dev only Tenant can pay the rent
-    function payRent(uint contract_id) public payable {
+    function payRent(uint contract_id)
+    public
+    payable
+    contractExists(contract_id)
+    tenantOnly(contract_id)
+    activeContractOnly(contract_id) {
 
         // RentContract contract = contracts[contract_id];
 
-        require(contracts[contract_id].doesExist == true, "Contract doesn't exist");
-        require(msg.sender == contracts[contract_id].tenant, "Only the registered tenant can deposit rent");
-        require(contracts[contract_id].status == AgreementStatus.Active, "Not an active contract");
         require(msg.value >= contracts[contract_id].rent_amount, "Insufficient rent amount");
 
         contracts[contract_id].remaining_payments -= 1;
@@ -242,9 +299,9 @@ contract TrustedPropertiesBasicRentContract is Ownable {
     function getContractDetails(uint contract_id)
         public
         view
+        contractExists(contract_id)
         returns ( RentContract memory) {
 
-        require(contracts[contract_id].doesExist == true, "Contract doesn't exist");
         require(msg.sender == contracts[contract_id].owner ||
             msg.sender == contracts[contract_id].tenant ||
             msg.sender == owner,
@@ -264,6 +321,42 @@ contract TrustedPropertiesBasicRentContract is Ownable {
             start_date: contracts[contract_id].start_date,
             duration_extension_request: contracts[contract_id].duration_extension_request
         });
+    }
+
+
+    /// Request to extend the contract duration - from tenant to owner
+    /// @param contract_id The id of the contract to to pay rent for
+    /// @param extension_duration The number of months for which thetenant wants to extend the contract
+    /// @dev only Tenant can make the request
+    function extendContractDurationRequest(uint contract_id, uint8 extension_duration)
+    public
+    contractExists(contract_id)
+    tenantOnly(contract_id)
+    activeContractOnly(contract_id) {
+
+        contracts[contract_id].duration_extension_request = extension_duration;
+
+        emit ContractDurationExtensionRequested(contract_id, extension_duration);
+    }
+
+
+	/// Request to extend the contract duration - from tenant to owner
+    /// @param contract_id The id of the contract to to pay rent for
+    /// @param extension_duration The number of months for which thetenant wants to extend the contract
+    /// @dev only Property Owner can make the request
+    function extendContractDurationConfirm(uint contract_id, uint8 extension_duration)
+    public
+    contractExists(contract_id)
+    ownerOnly(contract_id)
+    activeContractOnly(contract_id) {
+
+        require(contracts[contract_id].duration_extension_request == extension_duration, "Extension-duration does not match the what is requested by the tenant");
+
+        contracts[contract_id].duration += extension_duration;
+        contracts[contract_id].remaining_payments += extension_duration;
+        contracts[contract_id].duration_extension_request = 0;
+
+        emit ContractDurationExtended(contract_id, extension_duration);
     }
 
 }
