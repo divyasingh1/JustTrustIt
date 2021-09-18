@@ -4,8 +4,8 @@ const ipfs = IPFS({ host: 'ipfs.infura.io',
     port: 5001,protocol: 'https' });
 
 function routes(app, dbe, lms, accounts){
-    let db= dbe.collection('music-users')
-    let music = dbe.collection('music-store')
+    let db= dbe.collection('users')
+    let music = dbe.collection('store')
     app.post('/register', (req,res)=>{
         let email = req.body.email
         let idd = shortid.generate()
@@ -38,95 +38,104 @@ function routes(app, dbe, lms, accounts){
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
-    app.post('/createProduct', async (req,res)=>{
-        
-        let {name,description,uuid,manufacturerName} = req.body
-        if(name && description && uuid && manufacturerName){
-            lms.createProduct(name, description,uuid,manufacturerName, {from: "0x86C9A6f5E1737695788505889F6eD4A244eAFF6F"})
-            .then((_hash, _address)=>{
-                res.json({"status":"success", _hash, _address})
+    app.post('/addProperty', async (req,res)=>{
+        let contractId = Math.floor(Math.random()*1000);
+        let startDate = new Date().toDateString();
+        let {tenantAddress,securityDeposit,rentAmount, duration} = req.body
+
+        if(tenantAddress && securityDeposit && rentAmount && duration){
+            
+            lms.initializeRentContract(contractId,tenantAddress,securityDeposit,rentAmount,duration,startDate, {from: accounts[0]})
+            .then((hash, address)=>{
+                res.json({"status":"success", contractId, hash, address})
             })
             .catch(err=>{
                 res.status(500).json({"status":"Failed", "reason":"createProduct error occured", err})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
+      
         }
     })
 
-    app.post('/transferProduct', async (req,res)=>{
-        
-        let {addressTo,uuid} = req.body
-        if(addressTo && uuid){
-            lms.transferProduct(addressTo,uuid, {from: "0x86C9A6f5E1737695788505889F6eD4A244eAFF6F"})
+    app.post('/depositSecurity/:contractId', async (req,res)=>{
+        let {contractId} = req.params;
+        let { address, depositValue} = req.body;
+        if(contractId && address && depositValue){
+            lms.depositSecurity(contractId, {from: address, value: depositValue})
             .then((_hash, _address)=>{
                 res.json({"status":"success", _hash, _address})
             })
             .catch(err=>{
-                res.status(500).json({"status":"Failed", "reason":"transferProduct error occured", err})
+                res.status(500).json({"status":"Failed", "reason":"depositSecurity error occured", err})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
 
-    app.post('/addManufacturer', async (req,res)=>{
-        let license = req.body.license
+
+
+    app.post('/payRent', async (req,res)=>{
+        
+        let {contractId, address, rentAmount} = req.body
+        if(contractId && rentAmount && address){
+            lms.payRent(contractId, {from: address, value: rentAmount})
+            .then((_hash, _address)=>{
+                res.json({"status":"success", _hash, _address})
+            })
+            .catch(err=>{
+                res.status(500).json({"status":"Failed", "reason":"payRent error occured", err})
+            })
+        }else{
+            res.status(400).json({"status":"Failed", "reason":"wrong input"})
+        }
+    })
+
+    app.post('/withdraw', async (req,res)=>{
         let address = req.body.address
-        let id = shortid.generate() + shortid.generate()
-        if(license && address){
-            lms.addManufacturer(address, license, {from: accounts[0]})
+        if(address){
+            lms.withdraw({from: address})
             .then((_hash, _address)=>{
                 res.json({"status":"success", _hash, _address})
             })
             .catch(err=>{
-                res.status(500).json({"status":"Failed", "reason":"addManufacturer error occured", err})
+                res.status(500).json({"status":"Failed", "reason":"withdraw error occured", err})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
-    app.get('/getManufacturar/:address', (req,res)=>{
-        if(req.params.address){
-            lms.getManufacturar(req.params.address, {from: accounts[0]})
+    app.get('/getContractDetails/:contractId/:address', (req,res)=>{
+        if(req.params.contractId){
+            lms.getContractDetails(req.params.contractId, {from: req.params.address})
             .then(async(hash, data)=>{
                 res.json({"status":"success", hash: hash, data})
             })
             .catch(err=>{
-                res.status(500).json({"status":"Failed", "reason":"getManufacturar error occured", err})
+                res.status(500).json({"status":"Failed", "reason":"getContractDetails error occured", err})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
 
-    app.get('/getProductByProductId/:uuid', (req,res)=>{
-        if(req.params.uuid){
-            lms.getProductByProductId(req.params.uuid, {from: accounts[0]})
+    app.get('/getPendingFunds/:address', (req,res)=>{
+        if(req.params.address){
+            lms.getPendingFunds({from: req.params.address})
             .then(async(hash, data)=>{
-                res.json({"status":"success", hash: hash, data})
+
+                console.log("---", hash, data)
+                res.json({"status":"success", contractId: hash, data})
             })
             .catch(err=>{
-                res.status(500).json({"status":"Failed", "reason":"getProductByProductId error occured", err})
+                res.status(500).json({"status":"Failed", "reason":"getPendingFunds error occured", err})
             })
         }else{
             res.status(400).json({"status":"Failed", "reason":"wrong input"})
         }
     })
-        
-    app.get('/isOwnerOf/:address/:uuid', (req,res)=>{
-        if(req.params.uuid && req.params.address){
-            lms.isOwnerOf(req.params.address, req.params.uuid, {from: accounts[0]})
-            .then(async(hash, data)=>{
-                res.json({"status":"success", hash: hash, data})
-            })
-            .catch(err=>{
-                res.status(500).json({"status":"Failed", "reason":"isOwnerOf error occured", err})
-            })
-        }else{
-            res.status(400).json({"status":"Failed", "reason":"wrong input"})
-        }
-    })
+    
 }
 
 module.exports = routes
