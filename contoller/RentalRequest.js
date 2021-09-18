@@ -24,6 +24,34 @@ var RentalRequestSchema = new mongoose.Schema({
         type: String,
         require: true,
         default: false
+    },
+    contractId:{
+        type: Number,
+        require: true
+    },
+    tenantAddress:{
+        type: String,
+        require: true
+    },
+    securityDeposit:{
+        type: Number,
+        require: true
+    },
+    rentAmount:{
+        type: Number,
+        require: true
+    }, 
+    duration:{
+        type: Number,
+        require: true
+    }, 
+    startDate:{
+        type: String,
+        require: true
+    },
+    fromAddress:{
+        type: String,
+        require: true
     }
 },
 {

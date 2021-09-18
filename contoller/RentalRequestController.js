@@ -20,12 +20,10 @@ LMS.setProvider(web3.currentProvider)
 
 router.patch('/:rentalRequestId',async function (req, res) {
     var rentalRequestServiceInst = new RentalRequestService();
-    // req.userId = req.user.userId;
-    req.userId = "123";
+    req.userId = req.user.userId;
     const accounts = await web3.eth.getAccounts();
     const lms = await LMS.deployed();
-    let { tenantAddress, securityDeposit, rentAmount, duration, fromAddress } = req.body
-    return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId, req.userId, tenantAddress, securityDeposit, rentAmount, duration, fromAddress, accounts, lms)
+    return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId, req.userId, accounts, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Rental request Approved successfully"});
         })
