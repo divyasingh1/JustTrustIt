@@ -1,5 +1,5 @@
 const PropertyModel = require('./PropertyModel');
-const RentalRequestModel = require('./RentalRequestModel');;
+const RentalRequestModel = require('./RentalRequestModel');
 const {lms} = require("../lms")
 class RentalRequestService {
     constructor() {
@@ -15,13 +15,11 @@ class RentalRequestService {
             if(rentalRequest[0].ownerUserId !== userId){
                 return Promise.reject("Rental request does not belong to the logged in user");
             }
-            
-            let contractId = Math.floor(Math.random() * 1000);
             let startDate = new Date().toDateString();
             console.log("/???",rentalRequest )
             rentalRequest =  rentalRequest[0];
             if (rentalRequest.tenantAddress && rentalRequest.securityDeposit && rentalRequest.rentAmount && rentalRequest.duration && rentalRequest.fromAddress) {
-                lms.initializeRentContract(contractId, rentalRequest.tenantAddress, rentalRequest.securityDeposit, rentalRequest.rentAmount, rentalRequest.duration, startDate, { from: rentalRequest.fromAddress })
+                lms.initializeRentContract(rentalRequest.contractId, rentalRequest.tenantAddress, rentalRequest.securityDeposit, rentalRequest.rentAmount, rentalRequest.duration, startDate, { from: rentalRequest.fromAddress })
                     .then(async (hash) => {
                         console.log("/???", hash)
                         await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId});
@@ -56,6 +54,8 @@ class RentalRequestService {
                 data.ownerUserId = property[0].userId;
                 data.tenantUserId = tenantUserId;
                 data.requestApprovalDone = false;
+                let contractId = Math.floor(Math.random() * 10000);
+                data.contractId = contractId;
                 return rentalRequestModelInst.createRentalRequest(tenantUserId, data);
             } else {
                 return Promise.reject("Property Not found")
