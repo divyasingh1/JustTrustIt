@@ -1,4 +1,5 @@
-pragma solidity 0.4.24;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.5;
 
 import "./ERC165.sol";
 
@@ -25,7 +26,6 @@ contract SupportsInterfaceWithLookup is ERC165 {
    * implement ERC165 itself
    */
   constructor()
-    public
   {
     _registerInterface(InterfaceId_ERC165);
   }
@@ -34,7 +34,7 @@ contract SupportsInterfaceWithLookup is ERC165 {
    * @dev implement supportsInterface(bytes4) using a lookup table
    */
   function supportsInterface(bytes4 _interfaceId)
-    external
+    external override
     view
     returns (bool)
   {

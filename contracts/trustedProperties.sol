@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 // ----------------------------------------------------------------------------
 // Uhodchain Dapp
 // https://github.com/vincentshangjin/trustedPropertieschain
@@ -12,20 +14,20 @@
 // https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
 // ----------------------------------------------------------------------------
 
-pragma solidity 0.4.24;
+pragma solidity 0.8.5;
 
 import "./ERC721Token/ERC721Basic.sol";
 import "./ERC721Token/ERC721BasicToken.sol";
 /* import "./ERC721Token/ERC721Token.sol"; */
 
 
-contract ERC20Interface {
-    function totalSupply() public view returns (uint);
-    function balanceOf(address tokenOwner) public view returns (uint balance);
-    function allowance(address tokenOwner, address spender) public view returns (uint remaining);
-    function transfer(address to, uint tokens) public returns (bool success);
-    function approve(address spender, uint tokens) public returns (bool success);
-    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+interface ERC20Interface {
+    function totalSupply() external view returns (uint);
+    function balanceOf(address tokenOwner) external view returns (uint balance);
+    function allowance(address tokenOwner, address spender) external view returns (uint remaining);
+    function transfer(address to, uint tokens) external returns (bool success);
+    function approve(address spender, uint tokens) external returns (bool success);
+    function transferFrom(address from, address to, uint tokens) external returns (bool success);
 
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
@@ -36,13 +38,13 @@ contract ERC20Interface {
 // TrustedPropertiesToken Interface = ERC20 + symbol + decimals + burn
 // + approveAndCall
 // ----------------------------------------------------------------------------
-contract TrustedPropertiesTokenInterface is ERC20Interface {
-    function symbol() public view returns (string);
-    // function location() public view returns (string);
-    function decimals() public view returns (uint8);
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success);
-    // function mint(address tokenOwner, uint tokens) public returns (bool success);
-    function burn(address tokenOwner, uint tokens) public returns (bool success);
+interface TrustedPropertiesTokenInterface is ERC20Interface {
+    function symbol() external view returns (string memory);
+    // function location() external view returns (string);
+    function decimals() external view returns (uint8);
+    function approveAndCall(address spender, uint tokens, bytes memory data) external returns (bool success);
+    // function mint(address tokenOwner, uint tokens) external returns (bool success);
+    function burn(address tokenOwner, uint tokens) external returns (bool success);
 }
 
 
@@ -54,7 +56,7 @@ contract TrustedPropertiesTokenInterface is ERC20Interface {
 contract ApproveAndCallFallBack {
     event LogBytes(bytes data);
 
-    function receiveApproval(address from, uint256 tokens, address token, bytes data) public {
+    function receiveApproval(address from, uint256 tokens, address token, bytes memory data) public {
         ERC20Interface(token).transferFrom(from, address(this), tokens);
         emit LogBytes(data);
     }
@@ -98,7 +100,7 @@ contract Owned {
 
 
 /// @title ERC809: a standard interface for renting rival non-fungible tokens.
-contract ERC809 is ERC721Basic {
+interface ERC809 is ERC721Basic {
     /// @dev This emits when a successful rhttps://github.com/saurfang/erc809-billboard/blob/master/contracts/BasicBillboard.soleservation is made for accessing any NFT.
     event Reserve(address indexed _renter, uint256 _tokenId, uint256 _start, uint256 _end);
 
@@ -124,11 +126,11 @@ contract ERC809 is ERC721Basic {
 
     /// @notice Find the renter of an NFT token as of `_time`
     /// @dev The renter is who made a reservation on `_tokenId` and the reservation spans over `_time`.
-    function renterOf(uint256 _tokenId, uint256 _time) public view returns (address);
+    function renterOf(uint256 _tokenId, uint256 _time) external view returns (address);
 
 
     /// @notice Query if token `_tokenId` if available to reserve between `_start` and `_end` time
-    function checkAvailable(uint256 _tokenId, uint256 _start, uint256 _end) public view returns (bool available);
+    function checkAvailable(uint256 _tokenId, uint256 _start, uint256 _end) external view returns (bool available);
 }
 
 
@@ -196,19 +198,19 @@ library Properties {
     function add(
         Data storage self,
         address _ownerAddress,
-        string _propertyLocation,
+        string memory _propertyLocation,
         PropertyType _propertyType,
         NumberOf _bedrooms,
         NumberOf _bathrooms,
         NumberOf _garageSpaces,
-        string _comments,
+        string memory _comments,
         uint _initialAvailableDate)
     public
     {
         bytes32 propertyHash = keccak256(abi.encodePacked(_ownerAddress, _propertyLocation));
 
         require(!self.entries[propertyHash].exists);
-        require(_ownerAddress != 0x0);
+        require(_ownerAddress != address(0x0));
         require(bytes(_propertyLocation).length > 0);
 
         self.index.push(propertyHash);
@@ -233,7 +235,7 @@ library Properties {
         self.entries[lastIndexAddress].index = removeIndex;
         delete self.entries[_propertyHash];
         if (self.index.length > 0) {
-            self.index.length--;
+            self.index.pop();
         }
 
     }
@@ -252,6 +254,9 @@ library Properties {
     }
 
 }
+
+
+
 
 
 // ----------------------------------------------------------------------------
@@ -319,7 +324,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
     // Mapping from token ID to start time index to rental token approved party
     mapping (uint => mapping (uint => address)) public rentalTokenApprovals;
 
-    // Mapping from token ID to renter address to RentalTokenRights
+    // // Mapping from token ID to renter address to RentalTokenRights
     mapping (uint => mapping (address => RentalTokenRights)) public renterRights;
 
     // Mapping for preapproved retners
@@ -382,12 +387,12 @@ contract PropertyToken is ERC721BasicToken, Owned {
 
     function addProperty(
         address _originalOwnerAddress,
-        string _propertyLocation,
+        string memory _propertyLocation,
         PropertyType _propertyType,
         NumberOf _bedrooms,
         NumberOf _bathrooms,
         NumberOf _garageSpaces,
-        string _comments,
+        string memory _comments,
         uint _initialAvailableDate,
         uint _tokensAsBond,
         address _currentRenter)
@@ -396,10 +401,10 @@ contract PropertyToken is ERC721BasicToken, Owned {
         bytes32 propertyHash = keccak256(abi.encodePacked(_originalOwnerAddress, _propertyLocation));
 
         require(!entries[propertyHash].exists);
-        require(_originalOwnerAddress != 0x0);
+        require(_originalOwnerAddress != address(0x0));
         require(bytes(_propertyLocation).length > 0);
         require(_tokensAsBond > 0);
-        require(token.transferFrom(msg.sender, this, tokensToAddNewProperties));
+        require(token.transferFrom(msg.sender, payable(address(this)), tokensToAddNewProperties));
 
         index.push(propertyHash);
         entries[propertyHash] = Property(true, index.length - 1,
@@ -423,7 +428,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
         entries[lastIndexAddress].index = removeIndex;
         delete entries[_propertyHash];
         if (index.length > 0) {
-            index.length--;
+            index.pop();
         }
         _burn(_ownerAddress, uint(_propertyHash));
     }
@@ -445,7 +450,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
         NumberOf _bedrooms,
         NumberOf _bathrooms,
         NumberOf _garageSpaces,
-        string _comments,
+        string memory _comments,
         uint _tokensAsBond,
         address _currentRenter)
     public
@@ -474,12 +479,12 @@ contract PropertyToken is ERC721BasicToken, Owned {
         bool exists,
         uint index_,
         address owner,
-        string location,
+        string memory location,
         PropertyType propertyType,
         NumberOf bedrooms,
         NumberOf bathrooms,
         NumberOf garageSpaces,
-        string comments,
+        string memory comments,
         uint initialAvailableDate,
         uint tokensAsBond,
         address currentRenter)
@@ -497,7 +502,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
     function updateRentalIntention(uint _tokenId) public {
         bytes32 _propertyHash = bytes32(_tokenId);
         Property memory property = entries[_propertyHash];
-        require(token.allowance(msg.sender, this) > property.tokensAsBond);
+        require(token.allowance(msg.sender, payable(address(this))) > property.tokensAsBond);
         rentalIntention[_tokenId][msg.sender] = true;
     }
 
@@ -521,13 +526,13 @@ contract PropertyToken is ERC721BasicToken, Owned {
         bytes32 _propertyHash = bytes32(_tokenId);
         Property memory property = entries[_propertyHash];
 
-        require(token.transferFrom(_renter, this, property.tokensAsBond));
-        bondTaken[msg.sender][_tokenId] = bondTaken[msg.sender][_tokenId].add(property.tokensAsBond);
+        require(token.transferFrom(_renter, payable(address(this)), property.tokensAsBond));
+        bondTaken[msg.sender][_tokenId] = bondTaken[msg.sender][_tokenId] + property.tokensAsBond;
 
         require(_start > property.initialAvailableDate);
 
         // mint rental tokens
-        for (i = _startIndex; i < _endIndex; i++) {
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
             rentals[_tokenId][i] = _renter;
         }
 
@@ -561,7 +566,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
         return(rentalTokenRights.canBurn, rentalTokenRights.canTransferToAll, rentalTokenRights.canTransferToPreapproved, rentalTokenRights.canCopyAcrossRights);
     }
 
-    function addPreapprovedRenters(uint _tokenId, address[] _preapprovedList) public {
+    function addPreapprovedRenters(uint _tokenId, address[] memory _preapprovedList) public {
         require(ownerOf(_tokenId) == msg.sender);
         require(_preapprovedList.length > 0);
 
@@ -570,7 +575,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
         }
     }
 
-    function removePreapprovedRenters(uint _tokenId, address[] _preapprovedList) public {
+    function removePreapprovedRenters(uint _tokenId, address[] memory _preapprovedList) public {
         require(ownerOf(_tokenId) == msg.sender);
         require(_preapprovedList.length > 0);
 
@@ -582,16 +587,16 @@ contract PropertyToken is ERC721BasicToken, Owned {
     function approveRentalTransfer(address _to, uint _tokenId, uint _start, uint _end)
     public
     {
-        require(_to != 0x0);
+        require(_to != address(0x0));
         uint _startIndex;
         uint _endIndex;
         (_startIndex, _endIndex) = getTimeIndices(_start, _end);
 
-        for (uint i = _startIndex; i < _endIndex; i++) {
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
             require(rentals[_tokenId][i] == msg.sender);
         }
 
-        for (i = _startIndex; i < _endIndex; i++) {
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
             rentalTokenApprovals[_tokenId][i] = _to;
         }
         emit RentalTokenApproval(owner, _tokenId, _start, _end, msg.sender, _to);
@@ -616,7 +621,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
         require(isRenter || isRentalTokenApproved);
 
         RentalTokenRights memory rentalTokenRights = renterRights[_tokenId][_from];
-        require((rentalTokenRights.canBurn && _to == 0x0) ||
+        require((rentalTokenRights.canBurn && _to == address(0x0)) ||
         (rentalTokenRights.canTransferToAll) ||
             (rentalTokenRights.canTransferToPreapproved && preapprovedRenters[_tokenId][_to] == true));
 
@@ -631,11 +636,11 @@ contract PropertyToken is ERC721BasicToken, Owned {
             bytes32 _propertyHash = bytes32(_tokenId);
             Property memory property = entries[_propertyHash];
 
-            require(token.transferFrom(_to, this, property.tokensAsBond));
-            bondTaken[_to][_tokenId] = bondTaken[_to][_tokenId].add(property.tokensAsBond);
+            require(token.transferFrom(_to, payable(address(this)), property.tokensAsBond));
+            bondTaken[_to][_tokenId] = bondTaken[_to][_tokenId] + property.tokensAsBond;
         }
 
-        for (i = _startIndex; i < _endIndex; i++) {
+        for (uint256 i = _startIndex; i < _endIndex; i++) {
             rentals[_tokenId][i] = _to;
         }
 
@@ -643,7 +648,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
     }
 
     function cancelRental(address _from, uint _tokenId, uint _start, uint _end) public {
-        transferRentalFrom(_from, 0x0, _tokenId, _start, _end);
+        transferRentalFrom(_from, payable(address(0x0)), _tokenId, _start, _end);
     }
 
     // @dev check availability
@@ -658,7 +663,7 @@ contract PropertyToken is ERC721BasicToken, Owned {
     view
     returns (address renter)
     {
-        uint timeIndex = _time.div(minRentTime);
+        uint timeIndex = _time /minRentTime;
         renter = rentals[_tokenId][timeIndex];
     }
 
@@ -668,43 +673,43 @@ contract PropertyToken is ERC721BasicToken, Owned {
     view
     returns (address renter)
     {
-        uint timeIndex = _time.div(minRentTime);
+        uint timeIndex = _time / minRentTime;
         renter = rentalTokenApprovals[_tokenId][timeIndex];
     }
 
     // Not working
-    function balanceOfRental(address _renter, uint _tokenId, uint _start, uint _end)
-    public view returns(uint rentalTokenCount)
-    {
-        require(_start <= _end);
-        uint _startIndex = _start.div(minRentTime);
-        uint _endIndex = _end.div(minRentTime);
-        rentalTokenCount = 0;
-        for (uint i = _startIndex; i < _endIndex; i++) {
-            if (address(rentals[_tokenId][i]) == address(_renter)) {
-                rentalTokenCount++;
-            }
-        }
-        // return rentalTokenCount;
-    }
+    // function balanceOfRental(address _renter, uint _tokenId, uint _start, uint _end)
+    // public view returns(uint rentalTokenCount)
+    // {
+    //     require(_start <= _end);
+    //     uint _startIndex = _start /minRentTime;
+    //     uint _endIndex = _end / minRentTime;
+    //     rentalTokenCount = 0;
+    //     for (uint i = _startIndex; i < _endIndex; i++) {
+    //         if (address(rentals[_tokenId][i]) == address(_renter)) {
+    //             rentalTokenCount++;
+    //         }
+    //     }
+    //     // return rentalTokenCount;
+    // }
 
     // Not working
-    function balanceOfRentalApproval(address _approved, uint _tokenId, uint _start, uint _end)
-    public view returns(uint)
-    {
-        uint _startIndex;
-        uint _endIndex;
-        (_startIndex, _endIndex) = getTimeIndices(_start, _end);
+    // function balanceOfRentalApproval(address _approved, uint _tokenId, uint _start, uint _end)
+    // public view returns(uint)
+    // {
+    //     uint _startIndex;
+    //     uint _endIndex;
+    //     (_startIndex, _endIndex) = getTimeIndices(_start, _end);
 
-        uint rentalTokenApprovedCount = 0;
+    //     uint rentalTokenApprovedCount = 0;
 
-        for (uint i = _startIndex; i < _endIndex; i++) {
-            if (rentalTokenApprovals[_tokenId][i] == _approved) {
-                rentalTokenApprovedCount = rentalTokenApprovedCount + 1;
-            }
-        }
-        return rentalTokenApprovedCount;
-    }
+    //     for (uint i = _startIndex; i < _endIndex; i++) {
+    //         if (rentalTokenApprovals[_tokenId][i] == _approved) {
+    //             rentalTokenApprovedCount = rentalTokenApprovedCount + 1;
+    //         }
+    //     }
+    //     return rentalTokenApprovedCount;
+    // }
 
     /* Helper functions */
     function hashToInt(bytes32 _propertyHash) public pure returns (uint) {
@@ -717,14 +722,14 @@ contract PropertyToken is ERC721BasicToken, Owned {
 
     function getTimeIndices(uint _start, uint _end) public view returns (uint startIndex, uint endIndex) {
         require(_start <= _end);
-        uint _startIndex = _start.div(minRentTime);
-        uint _endIndex = _end.div(minRentTime);
+        uint _startIndex = _start / minRentTime;
+        uint _endIndex = _end / minRentTime;
         return (_startIndex, _endIndex);
     }
 
     // @dev internal check if reservation date is _isFuture
     function isFuture(uint _time) internal view returns (bool future) {
-        uint256 _now = now.div(minRentTime);
+        uint256 _now = block.timestamp / minRentTime;
         return _time > _now;
     }
 
@@ -739,11 +744,15 @@ contract PropertyToken is ERC721BasicToken, Owned {
 }
 
 
+
+
+
+
 // ----------------------------------------------------------------------------
 // TrustedPropertiesToken
 // ----------------------------------------------------------------------------
 contract TrustedPropertiesToken is TrustedPropertiesTokenInterface, Owned {
-    using SafeMath for uint;
+    // using SafeMath for uint;
 
     string public _symbol;
     string public _name;
@@ -753,7 +762,7 @@ contract TrustedPropertiesToken is TrustedPropertiesTokenInterface, Owned {
     mapping(address => uint) public balances;
     mapping(address => mapping(address => uint)) public allowed;
 
-    constructor(string symbol, string name, uint8 decimals, uint totalSupply) public {
+    constructor(string memory symbol, string memory name, uint8 decimals, uint totalSupply) public {
         _symbol = symbol;
         _name = name;
         _decimals = decimals;
@@ -762,73 +771,73 @@ contract TrustedPropertiesToken is TrustedPropertiesTokenInterface, Owned {
         emit Transfer(address(0), msg.sender, totalSupply);
     }
 
-    function () public payable {
+    fallback() external payable {
         revert();
     }
 
-    function symbol() public view returns (string) {
+    function symbol() public override view returns (string memory) {
         return _symbol;
     }
 
-    function name() public view returns (string) {
+    function name() public view returns (string memory) {
         return _name;
     }
 
-    function decimals() public view returns (uint8) {
+    function decimals() public override view returns (uint8) {
         return _decimals;
     }
 
-    function totalSupply() public constant returns (uint) {
+    function totalSupply() public override view returns (uint) {
         return _totalSupply - balances[address(0)];
     }
 
-    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+    function balanceOf(address tokenOwner) public override view returns (uint balance) {
         return balances[tokenOwner];
     }
 
-    function transfer(address to, uint tokens) public returns (bool success) {
-        balances[msg.sender] = balances[msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
+    function transfer(address to, uint tokens) public override returns (bool success) {
+        balances[msg.sender] -= tokens;
+        balances[to] += tokens;
         emit Transfer(msg.sender, to, tokens);
         return true;
     }
 
-    function approve(address spender, uint tokens) public returns (bool success) {
+    function approve(address spender, uint tokens) public override returns (bool success) {
         allowed[msg.sender][spender] = tokens;
         emit Approval(msg.sender, spender, tokens);
         return true;
     }
 
-    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
-        balances[from] = balances[from].sub(tokens);
-        allowed[from][msg.sender] = allowed[from][msg.sender].sub(tokens);
-        balances[to] = balances[to].add(tokens);
+    function transferFrom(address from, address to, uint tokens) public override returns (bool success) {
+        balances[from] -= tokens;
+        // allowed[from][msg.sender] -= tokens;
+        balances[to] += tokens;
         emit Transfer(from, to, tokens);
         return true;
     }
 
-    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+    function allowance(address tokenOwner, address spender) public override view returns (uint remaining) {
         return allowed[tokenOwner][spender];
     }
 
-    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+    function approveAndCall(address spender, uint tokens, bytes memory data) public override returns (bool success) {
         allowed[msg.sender][spender] = tokens;
         emit Approval(msg.sender, spender, tokens);
-        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, payable(address(this)), data);
         return true;
     }
     // function mint(address tokenOwner, uint tokens) public onlyOwner returns (bool success) {
-    //     balances[tokenOwner] = balances[tokenOwner].add(tokens);
-    //     _totalSupply = _totalSupply.add(tokens);
+    //     balances[tokenOwner] += tokens;
+    //     _totalSupply += tokens;
     //     emit Transfer(address(0), tokenOwner, tokens);
     //     return true;
     // }
 
-    function burn(address tokenOwner, uint tokens) public onlyOwner returns (bool success) {
+    function burn(address tokenOwner, uint tokens) public override onlyOwner returns (bool success) {
         if (tokens > balances[tokenOwner]) {
             tokens = balances[tokenOwner];
         }
-        _totalSupply = _totalSupply.sub(tokens);
+        _totalSupply -= tokens;
         balances[tokenOwner] = 0;
         emit Transfer(tokenOwner, address(0), tokens);
         return true;
@@ -840,12 +849,15 @@ contract TrustedPropertiesToken is TrustedPropertiesTokenInterface, Owned {
 }
 
 
+
+
+
 // ----------------------------------------------------------------------------
 // TrustedProperties
 // ----------------------------------------------------------------------------
 contract TrustedProperties is Owned {
     // TODO: create multiple owner/admins to approve property listing
-    using SafeMath for uint;
+    // using SafeMath for uint;
     using Properties for Properties.Data;
     // using Proposals for Proposals.Data;
 
@@ -891,26 +903,26 @@ contract TrustedProperties is Owned {
         initialised = true;
     }
 
-    function getPropertyHash(address _propertyOwner, string _propertyLocation) public pure returns (bytes32) {
+    function getPropertyHash(address _propertyOwner, string memory _propertyLocation) public pure returns (bytes32) {
         bytes32 propertyHash = keccak256(abi.encodePacked(_propertyOwner, _propertyLocation));
         return propertyHash;
     }
 
     function addProperty(
         address _propertyOwner,
-        string _propertyLocation,
+        string memory _propertyLocation,
         Properties.PropertyType _propertyType,
         Properties.NumberOf _bedrooms,
         Properties.NumberOf _bathrooms,
         Properties.NumberOf _garageSpaces,
-        string _comments,
+        string memory _comments,
         uint _initialAvailableDate)
     public
     {
         // TODO: implement approveAndCall
         // require(token.approveAndCall(this, tokensToAddNewProperties, ""));
-        require(token.transferFrom(msg.sender, this, tokensToAddNewProperties));
-        balances[tokenAddress][msg.sender] = balances[tokenAddress][msg.sender].add(tokensToAddNewProperties);
+        require(token.transferFrom(msg.sender, payable(address(this)), tokensToAddNewProperties));
+        balances[tokenAddress][msg.sender] += tokensToAddNewProperties;
         emit TokensDeposited(msg.sender, tokenAddress, tokensToAddNewProperties, balances[tokenAddress][msg.sender]);
         properties.add(_propertyOwner, _propertyLocation, _propertyType,
             _bedrooms, _bathrooms, _garageSpaces, _comments, _initialAvailableDate);
@@ -955,7 +967,7 @@ contract TrustedProperties is Owned {
         return properties.length();
     }
 
-    function getProperties() public view returns (bytes32[]) {
+    function getProperties() public view returns (bytes32[] memory) {
         return properties.index;
     }
 
@@ -970,12 +982,12 @@ contract TrustedProperties is Owned {
         bool exists,
         uint index,
         address owner,
-        string location,
+        string memory location,
         Properties.PropertyType propertyType,
         Properties.NumberOf bedrooms,
         Properties.NumberOf bathrooms,
         Properties.NumberOf garageSpaces,
-        string comments,
+        string memory comments,
         uint initialAvailableDate)
     {
         /* bytes32 propertyHash = keccak256(abi.encodePacked(_ownerAddress, _propertyLocation)); */
