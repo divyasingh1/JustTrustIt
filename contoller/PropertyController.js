@@ -80,4 +80,21 @@ router.post('/', function (req, res) {
 
     });
 
+    
+router.get('/getContractDetails/:contractId/:0x473d72D0E77f6d934CEE27821A4349e8cD403dDc', async function (req, res) {
+    var propertyServiceInst = new PropertyService();
+    req.userId = req.user.userId;
+
+    let { contractId, address } = req.params;
+    const accounts = await web3.eth.getAccounts();
+    const lms = await LMS.deployed();
+    return propertyServiceInst.getContractDetails(req.userId, contractId, address, lms)
+    .then((data) => {
+        res.send({ "status": "SUCCESS" , message: "Contract Details Successfully", data});
+    })
+    .catch((err) => {
+        res.status(400).send({ status: "Failed",  message: "Contract Details error", error: err });
+    });
+})
+
 module.exports = router;

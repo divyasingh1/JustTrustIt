@@ -8,28 +8,28 @@ class PropertyService {
 
     async depositSecurity(userId, contractId, lms) {
         return new Promise(async (resolve, reject) => {
-        if (contractId) {
-            var rentalRequestModelInst = new RentalRequestModel();
-            let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
-            if (rentalRequest.length <= 0) {
-                return Promise.reject("Rental request not found or is not approved");
+            if (contractId) {
+                var rentalRequestModelInst = new RentalRequestModel();
+                let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
+                if (rentalRequest.length <= 0) {
+                    return Promise.reject("Rental request not found or is not approved");
+                }
+                if (rentalRequest[0].ownerUserId !== userId) {
+                    return Promise.reject("Rental request does not belong to the logged in user");
+                }
+                lms.depositSecurity(contractId, { from: rentalRequest[0].tenantAddress, value: rentalRequest[0].securityDeposit })
+                    .then((_hash, _address) => {
+                        console.log("_hash", _hash)
+                        return resplve(_hash);
+                    })
+                    .catch(err => {
+                        console.log(err);
+                        return reject(err)
+                    })
+            } else {
+                return reject("wrong input")
             }
-            if (rentalRequest[0].ownerUserId !== userId) {
-                return Promise.reject("Rental request does not belong to the logged in user");
-            }
-            lms.depositSecurity(contractId, { from: rentalRequest[0].tenantAddress, value: rentalRequest[0].securityDeposit })
-                .then((_hash, _address) => {
-                    console.log("_hash", _hash)
-                    return resplve(_hash);
-                })
-                .catch(err => {
-                    console.log(err);
-                    return reject(err)
-                })
-        } else {
-            return reject("wrong input")
-        }
-    })
+        })
     }
 
     async payrent(userId, contractId, lms) {
@@ -54,6 +54,23 @@ class PropertyService {
                     })
             } else {
                 return reject("wrong input");
+            }
+        })
+    }
+
+    async getContractDetails(userId, contractId, address, lms) {
+        return new Promise(async (resolve, reject) => {
+            if (contractId) {
+                lms.getContractDetails(contractId, { from: address })
+                    .then(async (data) => {
+                        return resolve(data)
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return reject(err)
+                    })
+            } else {
+                return reject("wrong input")
             }
         })
     }
