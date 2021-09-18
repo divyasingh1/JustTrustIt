@@ -7,6 +7,7 @@ class PropertyService {
     }
 
     async depositSecurity(userId, contractId, lms) {
+        return new Promise(async (resolve, reject) => {
         if (contractId) {
             var rentalRequestModelInst = new RentalRequestModel();
             let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
@@ -19,39 +20,42 @@ class PropertyService {
             lms.depositSecurity(contractId, { from: rentalRequest[0].tenantAddress, value: rentalRequest[0].securityDeposit })
                 .then((_hash, _address) => {
                     console.log("_hash", _hash)
-                    return _hash;
+                    return resplve(_hash);
                 })
                 .catch(err => {
-                    console.log("?????",err.reason);
-                    return data
-                    return Promise.reject(err.reason);
+                    console.log(err);
+                    return reject(err)
                 })
         } else {
-           return Promise.reject("wrong input")
+            return reject("wrong input")
         }
+    })
     }
 
-    async payrent(userId, contractId, lms){
-        if (userId && contractId) {
-            var rentalRequestModelInst = new RentalRequestModel();
-            let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
-            if (rentalRequest.length <= 0) {
-                return Promise.reject("Rental request not found or is not approved");
+    async payrent(userId, contractId, lms) {
+        return new Promise(async (resolve, reject) => {
+            if (userId && contractId) {
+                var rentalRequestModelInst = new RentalRequestModel();
+                let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
+                if (rentalRequest.length <= 0) {
+                    return Promise.reject("Rental request not found or is not approved");
+                }
+                if (rentalRequest[0].ownerUserId !== userId) {
+                    return Promise.reject("Rental request does not belong to the logged in user");
+                }
+                lms.payRent(contractId, { from: rentalRequest[0].tenantAddress, value: rentalRequest[0].rentAmount })
+                    .then(async (_hash, _address) => {
+                        console.log(hash)
+                        return resolve(_hash);
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return reject(err);
+                    })
+            } else {
+                return reject("wrong input");
             }
-            if (rentalRequest[0].ownerUserId !== userId) {
-                return Promise.reject("Rental request does not belong to the logged in user");
-            }
-            lms.payRent(contractId, { from: rentalRequest[0].tenantAddress, value: rentalRequest[0].rentAmount })
-                .then((_hash, _address) => {
-                   console.log(hash)
-                   return _hash;
-                })
-                .catch(err => {
-                    return Promise.reject(err);
-                })
-        } else {
-            return Promise.reject(err);
-        }
+        })
     }
 
     createProperty(userId, details) {

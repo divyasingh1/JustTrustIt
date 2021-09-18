@@ -68,13 +68,13 @@ router.post('/', function (req, res) {
         let { contractId } = req.params;
         const accounts = await web3.eth.getAccounts();
         const lms = await LMS.deployed();
-        return propertyServiceInst.payrent(req.userId, contractId, lms)
+        return propertyServiceInst.payrent(req.userId, contractId, lms, res)
         .then((data) => {
-            console.log("data", data, typeof data)
+            console.log(">2>>>>>>", data)
             res.send({ "status": "SUCCESS" , message: "rent paid Successfully", data});
         })
         .catch((err) => {
-            console.log("Error in deposit rent====================", err);
+            console.log("Error in pay rent====================", err);
             res.status(400).send({ status: "Failed",  message: "pay rent failed", error: err });
         });
 
