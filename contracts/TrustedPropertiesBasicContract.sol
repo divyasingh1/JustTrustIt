@@ -25,7 +25,7 @@ contract Ownable {
 /**
  * @title Basic contract for TrustedProperties
  */
-contract TrustedPropertiesBasicContract is Ownable {
+contract TrustedPropertiesBasicRentContract is Ownable {
 
     /// How much wei/token required as fee for any transaction?
     uint public contractTransactionFee;
@@ -47,6 +47,9 @@ contract TrustedPropertiesBasicContract is Ownable {
 
 		/// Agreement status (active, complete, terminated, etc)
 		AgreementStatus status;
+
+		/// Property ID
+		string property_id;
 
 		/// Property owner account's address
 		address owner;
@@ -115,7 +118,7 @@ contract TrustedPropertiesBasicContract is Ownable {
 
 
     /// Initialize RentContract by the owner
-    function initializeRentContract(uint contract_id, address tenant, uint security_deposit, uint rent_amount, uint8 duration, string memory start_date) public {
+    function initializeRentContract(uint contract_id, string memory property_id, address tenant, uint security_deposit, uint rent_amount, uint8 duration, string memory start_date) public {
         address owner = msg.sender;
 
         require(contracts[contract_id].doesExist != true, "Contract already exists");
@@ -123,6 +126,7 @@ contract TrustedPropertiesBasicContract is Ownable {
 
         contracts[contract_id] = RentContract({
             doesExist: true,
+            property_id: property_id,
             status: AgreementStatus.DepositPending,
             owner: owner,
             tenant: tenant,
@@ -140,6 +144,7 @@ contract TrustedPropertiesBasicContract is Ownable {
 
 
     /// Deposit the security amount from tenant to owner
+    /// @param contract_id The id of the contract to deposit security amount for
     function depositSecurity(uint contract_id) public payable {
 
         // RentContract contract = contracts[contract_id];
@@ -170,6 +175,8 @@ contract TrustedPropertiesBasicContract is Ownable {
 
 
     /// Deposit the security amount from tenant to owner
+    /// @param contract_id The id of the contract to to pay rent for
+    /// @dev only Tenant can pay the rent
     function payRent(uint contract_id) public payable {
 
         // RentContract contract = contracts[contract_id];
@@ -224,14 +231,18 @@ contract TrustedPropertiesBasicContract is Ownable {
     }
 
 
+    /// Get the funds available in self's wallet
     function getPendingFunds() public view returns (uint) {
         return balances[msg.sender];
     }
 
 
+    /// Get the details of a contract
+    /// @param contract_id The id of the contract to get details of
     function getContractDetails(uint contract_id)
-        public view
-        returns (uint8 status, address owner, address tenant, uint security_deposit, uint rent_amount, uint8 duration, uint8 remaining_payments) {
+        public
+        view
+        returns ( RentContract memory) {
 
         require(contracts[contract_id].doesExist == true, "Contract doesn't exist");
         require(msg.sender == contracts[contract_id].owner ||
@@ -239,13 +250,20 @@ contract TrustedPropertiesBasicContract is Ownable {
             msg.sender == owner,
             "You are not allowed to view this contract");
 
-        return (uint8(contracts[contract_id].status),
-            contracts[contract_id].owner,
-            contracts[contract_id].tenant,
-            contracts[contract_id].security_deposit,
-            contracts[contract_id].rent_amount,
-            contracts[contract_id].duration,
-            contracts[contract_id].remaining_payments);
+        return RentContract({
+            doesExist: true,
+            property_id: contracts[contract_id].property_id,
+            status: contracts[contract_id].status,
+            owner: contracts[contract_id].owner,
+            tenant: contracts[contract_id].tenant,
+            security_deposit: contracts[contract_id].security_deposit,
+            rent_amount: contracts[contract_id].rent_amount,
+            duration: contracts[contract_id].duration,
+            remaining_payments: contracts[contract_id].remaining_payments,
+            remaining_security_deposit: contracts[contract_id].remaining_security_deposit,
+            start_date: contracts[contract_id].start_date,
+            duration_extension_request: contracts[contract_id].duration_extension_request
+        });
     }
 
 }
