@@ -51,8 +51,7 @@ class RentalRequestService {
                 data.requestApprovalDone = false;
                 let contractId = Math.floor(Math.random() * 10000);
                 data.contractId = contractId;
-                data.tenantAddress = publicKey, 
-                data.duration = 1
+                data.tenantAddress = publicKey;
                 return rentalRequestModelInst.createRentalRequest(tenantUserId, data);
             } else {
                 return Promise.reject("Property Not found")
@@ -61,6 +60,40 @@ class RentalRequestService {
             console.log("Error in create rental request", e)
             return Promise.reject("Property Not found or this property is not available")
         }
+    }
+
+    extendContractDurationRequest(userId, address, contractId, extensionDuration, lms){
+        return new Promise(async (resolve, reject) => {
+            if (address && contractId && extensionDuration) {
+                lms.extendContractDurationRequest(contractId, extensionDuration, { from: address })
+                    .then(async (data) => {
+                        resolve(data);
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return reject(err)
+                    })
+            } else {
+                return reject("Wrong input")
+            }
+        })
+    }
+
+    extendContractDurationConfirm(userId, address, contractId, extensionDuration, lms){
+        return new Promise(async (resolve, reject) => {
+            if (address && contractId && extensionDuration) {
+                lms.extendContractDurationConfirm(contractId, extensionDuration, { from: address })
+                    .then(async (data) => {
+                        resolve(data);
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return reject(err)
+                    })
+            } else {
+                return reject("Wrong input")
+            }
+        })
     }
 
     findRentalRequest(filter) {

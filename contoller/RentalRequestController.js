@@ -48,5 +48,33 @@ router.post('/', function (req, res) {
         });
 });
 
+router.patch('/extendContractDurationRequest/:contractId',async function (req, res) {
+    var rentalRequestServiceInst = new RentalRequestService();
+    req.userId = req.user.userId;
+    req.publicKey = req.user.publicKey;
+    const lms = await LMS.deployed();
+    return rentalRequestServiceInst.extendContractDurationRequest(req.userId,  req.publicKey, req.params.contractId,  req.body.extensionDuration, lms)
+        .then((data) => {
+            res.send({ "status": "SUCCESS", message: "Extend Contract Duration Request successful"});
+        })
+        .catch((err) => {
+            res.status(500).send({ status: "Failed" , message: "extend Contract Duration Request request failed", error: err});
+        });
+});
+
+
+router.patch('/extendContractDurationConfirm/:contractId',async function (req, res) {
+    var rentalRequestServiceInst = new RentalRequestService();
+    req.userId = req.user.userId;
+    req.publicKey = req.user.publicKey;
+    const lms = await LMS.deployed();
+    return rentalRequestServiceInst.extendContractDurationConfirm(req.userId,  req.publicKey, req.params.contractId,  req.body.extensionDuration, lms)
+        .then((data) => {
+            res.send({ "status": "SUCCESS", message: "Extend Contract Duration Request confirmed"});
+        })
+        .catch((err) => {
+            res.status(500).send({ status: "Failed" , message: "extend Contract Duration Request request confirmation failed", error: err});
+        });
+});
 
 module.exports = router;

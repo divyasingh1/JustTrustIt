@@ -42,6 +42,21 @@ router.post('/setRent/:propertyId', async function (req, res) {
         });
 });
 
+
+//working
+router.post('/changeStatus/:status/:propertyId', async function (req, res) {
+    var propertyServiceInst = new PropertyService();
+    const lms = await LMS.deployed();
+    return propertyServiceInst.changeStatus(req.params.propertyId, req.user.publicKey, req.params.status, lms)
+        .then((data) => {
+            res.send({ "status": "SUCCESS",  message: "Property " + req.params.status+ "d" + " successfully" });
+        })
+        .catch((err) => {
+            res.status(500).send({ status: "Failed" ,  message: "Property Couldn't be " + req.params.status+ "d" + " successfully", error: err});
+        });
+});
+
+
 //not working
  router.post('/payrent/:contractId', async function (req, res) {
         var propertyServiceInst = new PropertyService();
@@ -51,7 +66,7 @@ router.post('/setRent/:propertyId', async function (req, res) {
         const lms = await LMS.deployed();
         return propertyServiceInst.payrent(req.userId, contractId, lms)
         .then((data) => {
-            res.send({ "status": "SUCCESS" , message: "Rent paid Successfully", data});
+            res.send({ "status": "SUCCESS" , message: "Rent paid Successfully"});
         })
         .catch((err) => {
             res.status(400).send({ status: "Failed",  message: "Rent payment failed", error: err });
@@ -83,7 +98,7 @@ router.post('/', async function (req, res) {
         const lms = await LMS.deployed();
         return propertyServiceInst.depositSecurity(req.userId, contractId, lms)
         .then((data, data2) => {
-            res.send({ "status": "SUCCESS" , message: "rent deposited Successfully"});
+            res.send({ "status": "SUCCESS" , message: "Security deposited Successfully"});
         })
         .catch((err) => {
             res.status(400).send({ status: "Failed",  message: "deposit security failed", error: err });

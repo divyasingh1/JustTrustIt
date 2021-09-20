@@ -6,7 +6,7 @@ class PropertyService {
     constructor() {
     }
 
-    async isPropertyAvailable(propertyId, address, lms){
+    async isPropertyAvailable(propertyId, address, lms) {
         return new Promise(async (resolve, reject) => {
             if (propertyId) {
                 lms.isPropertyAvailable(propertyId, { from: address })
@@ -31,7 +31,7 @@ class PropertyService {
                     return Promise.reject("Rental request not found or is not approved");
                 }
                 var propertyModelInst = new PropertyModel();
-                let property = await propertyModelInst.findProperty({propertyId: rentalRequest[0].propertyId});
+                let property = await propertyModelInst.findProperty({ propertyId: rentalRequest[0].propertyId });
                 lms.depositSecurity(contractId, { from: rentalRequest[0].tenantAddress, value: property[0].securityDeposit })
                     .then((data, _address) => {
                         return resolve(data);
@@ -55,7 +55,7 @@ class PropertyService {
                     return Promise.reject("Rental request not found or is not approved");
                 }
                 var propertyModelInst = new PropertyModel();
-                let property = await propertyModelInst.findProperty({propertyId: rentalRequest[0].propertyId});
+                let property = await propertyModelInst.findProperty({ propertyId: rentalRequest[0].propertyId });
 
                 lms.payRent(contractId, { from: rentalRequest[0].tenantAddress, value: property[0].rentAmount })
                     .then(async (data) => {
@@ -90,7 +90,7 @@ class PropertyService {
 
     createProperty(userId, details, lms, address) {
         details.userId = userId;
-         details.propertyId = uuidv4();
+        details.propertyId = uuidv4();
         return new Promise(async (resolve, reject) => {
             if (details) {
                 lms.addProperty(details.propertyId, details.propertyType, details.unitNumber, details.pincode, details.location, details.rooms, details.bathrooms, details.parking, details.initialAvailableDate, { from: address })
@@ -128,7 +128,7 @@ class PropertyService {
         return propertyModelInst.findProperty(dbFilter);
     }
 
-    getPropertyById(propertyId, address, lms){
+    getPropertyById(propertyId, address, lms) {
         return new Promise(async (resolve, reject) => {
             if (propertyId) {
                 lms.getProperty(propertyId, { from: address })
@@ -145,13 +145,13 @@ class PropertyService {
         })
     }
 
-    setRent(propertyId, details, address, lms){
+    setRent(propertyId, details, address, lms) {
         var propertyModelInst = new PropertyModel();
         return new Promise(async (resolve, reject) => {
             if (propertyId && details.securityDeposit && details.rentAmount && address) {
-                lms.setRent(propertyId, details.securityDeposit , details.rentAmount, { from: address })
+                lms.setRent(propertyId, details.securityDeposit, details.rentAmount, { from: address })
                     .then(async (data) => {
-                        await propertyModelInst.updateProperty(propertyId, {rentAmount: details.rentAmount,securityDeposit: details.securityDeposit});
+                        await propertyModelInst.updateProperty(propertyId, { rentAmount: details.rentAmount, securityDeposit: details.securityDeposit });
                         resolve(data);
                     })
                     .catch(err => {
@@ -164,7 +164,7 @@ class PropertyService {
         })
     }
 
-    withdrawFunds(address, lms){
+    withdrawFunds(address, lms) {
         return new Promise(async (resolve, reject) => {
             if (address) {
                 lms.withdraw({ from: address })
@@ -175,6 +175,37 @@ class PropertyService {
                         console.log(err)
                         return reject(err)
                     })
+            } else {
+                return reject("wrong input")
+            }
+        })
+    }
+
+    changeStatus(propertyId, address, status, lms) {
+        return new Promise(async (resolve, reject) => {
+            if (address && propertyId) {
+                if (status === 'deactivate') {
+                    lms.deactivateProperty(propertyId, { from: address })
+                        .then(async (data) => {
+                            resolve(data);
+                        })
+                        .catch(err => {
+                            console.log(err)
+                            return reject(err)
+                        })
+                }
+                else if (status == 'activate') {
+                    lms.activateProperty(propertyId, { from: address })
+                        .then(async (data) => {
+                            resolve(data);
+                        })
+                        .catch(err => {
+                            console.log(err)
+                            return reject(err)
+                        })
+                } else {
+                    return reject("Status shuold be either activate or deactivate")
+                }
             } else {
                 return reject("wrong input")
             }
