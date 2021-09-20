@@ -85,6 +85,9 @@ contract TrustedPropertyListing {
         address originalOwner;
         uint currentRent;
         uint currentSecurity;
+        bool discount_available;
+        uint discount_amount;
+        uint8 discount_duration;
     }
 
 
@@ -96,16 +99,27 @@ contract TrustedPropertyListing {
     }
 
 
+    // Struct to hold the rent discount details when paid in bulk
+    // TODO: Dynamic discounts
+    struct RentDiscount {
+        bool enabled;                           // Is discount active?
+        uint amount;                            // Discount amount
+        uint8 duration;                         // Duration (in months) for which rent has to be paid to avail discount
+    }
+
+
     /// Mapping of property_id to the Property data
-    /// TODO: Make private
     mapping (string => Property) internal properties;
 
     /// Mapping of property_id to it's Rent data
-    /// TODO: Make private
     mapping (string => PropertyRent) internal propertyRents;
 
     /// Mapping of hash of a property to property_id
     mapping (bytes32 => string) private propertyHashes;
+
+    /// Mapping of property_id to RentDiscount data
+    mapping(string => RentDiscount) internal propertyRentDiscounts;
+
 
     uint32 public propertyCount = 0;
     uint32 public activePropertyCount = 0;
@@ -249,12 +263,15 @@ contract TrustedPropertyListing {
             parking: properties[property_id].parking,
             originalOwner: properties[property_id].originalOwner,
             currentRent: propertyRents[property_id].rent_amount,
-            currentSecurity: propertyRents[property_id].security_deposit
+            currentSecurity: propertyRents[property_id].security_deposit,
+            discount_available: propertyRentDiscounts[property_id].enabled,
+            discount_amount: propertyRentDiscounts[property_id].amount,
+            discount_duration: propertyRentDiscounts[property_id].duration
         });
     }
 
 
-    /// Set rent for the property
+    /// Set rent for a property
     /// @dev Only the property owner can set rent
     function setRent (
         string memory property_id,
@@ -272,6 +289,39 @@ contract TrustedPropertyListing {
             updatedAt: block.timestamp
         });
         return true;
+    }
+
+
+    /// Clear rent-discount for a property
+    /// @dev Only the property owner can set rent
+    function clearDiscount (
+        string memory property_id)
+    public
+    propertyOwnerOnly(property_id)
+    {
+        propertyRentDiscounts[property_id].enabled = false;
+    }
+
+
+    /// Set rent-discount for the property
+    /// @dev Only the property owner can set rent
+    function setDiscount (
+        string memory property_id,
+        uint discount_amount,
+        uint8 duration)
+    public
+    propertyIsActive(property_id)
+    propertyOwnerOnly(property_id)
+    {
+        require(propertyRents[property_id].rent_amount > 0, "Set the property rent first");
+        require(discount_amount < propertyRents[property_id].rent_amount, "Discount must be less than rent");
+        require(duration > 1, "Duration must be more than 1 month");
+
+        propertyRentDiscounts[property_id] = RentDiscount({
+            enabled: true,
+            amount: discount_amount,
+            duration: duration
+        });
     }
 
 
@@ -389,6 +439,14 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
     /// @param trxn_fee Fee deducted for the transaction
     event RentPaid(uint contract_id, uint amount, uint trxn_fee);
 
+    /// Notify whenever a rent is paid
+    /// @param contract_id ID of the contract
+    /// @param duration Duration (in months) for the advance payment
+    /// @param amount Total rent amount paid (minus the discount)
+    /// @param discount Discount for the tenant
+    /// @param trxn_fee Fee deducted for the transaction
+    event AdvanceRentPaid(uint contract_id, uint8 duration, uint amount, uint discount, uint trxn_fee);
+
     /// Notify whenever the contract is prematurely terminated
     /// @param contract_id ID of the contract
     event ContractTerminated(uint contract_id);
@@ -422,17 +480,17 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
     }
 
     modifier ownerOnly(uint contract_id) {
-        require(msg.sender == contracts[contract_id].owner, "Only the registered property owner is allowed to do this");
+        require(msg.sender == contracts[contract_id].owner, "Only property owner can do this");
         _;
     }
 
     modifier tenantOnly(uint contract_id) {
-        require(msg.sender == contracts[contract_id].tenant, "Only the registered tenant is allowed to do this");
+        require(msg.sender == contracts[contract_id].tenant, "Only tenant can do this");
         _;
     }
 
     modifier activeContractOnly(uint contract_id) {
-        require(contracts[contract_id].status == AgreementStatus.Active, "Only allowed for active contracts. Check status.");
+        require(contracts[contract_id].status == AgreementStatus.Active, "Only allowed for active contracts");
         _;
     }
 
@@ -485,7 +543,7 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
     }
 
 
-    /// Deposit the security amount from tenant to owner
+    /// Deposit the security amount (from tenant to to contract-account)
     /// @param contract_id The id of the contract to deposit security amount for
     function depositSecurity(uint contract_id)
     public
@@ -496,7 +554,7 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
         // RentContract contract = contracts[contract_id];
 
         require(contracts[contract_id].status == AgreementStatus.DepositPending, "Security already deposited");
-        require(msg.value >= contracts[contract_id].security_deposit, "Insufficient security deposit amount");
+        require(msg.value >= contracts[contract_id].security_deposit, "Insufficient amount");
 
         uint debit_amount = contracts[contract_id].security_deposit;
 
@@ -518,35 +576,47 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
 
 
 
-    /// Deposit the security amount from tenant to owner
+    // Process a successful contract termination
+    function _processContractTermination(
+        uint contract_id)
+    private {
+        // Is it the last payment?
+        if (contracts[contract_id].remaining_payments == 0 && contracts[contract_id].status != AgreementStatus.Completed) {
+
+            // Contract over
+            contracts[contract_id].status = AgreementStatus.Completed;
+
+            // Refund security deposit to the Tenant
+            balances[contracts[contract_id].tenant] += contracts[contract_id].security_deposit_balance;
+            contracts[contract_id].security_deposit_balance = 0;
+
+            // Reset the current teannt of the property
+            _setCurrentTenant(contracts[contract_id].property_id, address(0x0));
+        }
+    }
+
+
+
+    /// Pay the rent amount for one month (from tenant to owner)
     /// @param contract_id The id of the contract to pay rent for
     /// @dev only Tenant can pay the rent
-    function payRent(uint contract_id)
+    function payRent(
+        uint contract_id)
     public
     payable
     contractExists(contract_id)
     tenantOnly(contract_id)
     activeContractOnly(contract_id) {
 
-        // RentContract contract = contracts[contract_id];
+        uint debit_amount = contracts[contract_id].rent_amount;
 
-        require(msg.value >= contracts[contract_id].rent_amount, "Insufficient rent amount");
+        require(msg.value >= debit_amount, "Insufficient amount");
 
         contracts[contract_id].remaining_payments -= 1;
 
-        // Is it the last payment?
-        if (contracts[contract_id].remaining_payments == 0) {
-            // Contract over
-            contracts[contract_id].status = AgreementStatus.Completed;
-
-            // Refund security deposit to the Tenant
-            balances[contracts[contract_id].tenant] += contracts[contract_id].security_deposit_balance;
-
-            // Reset the current teannt of the property
-            _setCurrentTenant(contracts[contract_id].property_id, address(0x0));
-        }
-
-        uint debit_amount = contracts[contract_id].rent_amount;
+        // Is it the last payment? Terminate the contract...
+        // TODO: Terminate contract only after the renting period is over
+        _processContractTermination(contract_id);
 
 
         // Transfer the rent amount to owner (minus the platform fee)
@@ -557,8 +627,52 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
             balances[contracts[contract_id].tenant] += (msg.value - debit_amount);
         }
 
-        emit RentPaid(contract_id, contracts[contract_id].security_deposit, contractTransactionFee);
+        emit RentPaid(contract_id, contracts[contract_id].rent_amount, contractTransactionFee);
         emit ExtraAmountRefunded(contract_id, msg.value - debit_amount);
+    }
+
+
+    /// Pay the rent amount in adavnce for getting a discount (from tenant to owner)
+    /// @param contract_id The id of the contract to pay rent for
+    /// @param duration The duration for which advance payment is being done
+    /// @dev Only Tenant can pay the rent
+    /// @dev Advance payment allowed only with the first rent payment
+    /// @dev Rent discount must be active & advance duration must be equal to the discount duration
+    function payAdvanceRent(
+        uint contract_id,
+        uint8 duration)
+    public
+    payable
+    contractExists(contract_id)
+    tenantOnly(contract_id)
+    activeContractOnly(contract_id) {
+
+        require(propertyRentDiscounts[contracts[contract_id].property_id].enabled, "Discount not enabled");
+        require(contracts[contract_id].remaining_payments == contracts[contract_id].duration, "Allowed only with first payment");
+        require(duration <= contracts[contract_id].remaining_payments, "Duration can't be more than remaining payments");
+        require(duration == propertyRentDiscounts[contracts[contract_id].property_id].duration, "Duration must be same as property's discounted duration");
+
+        uint debit_amount = contracts[contract_id].rent_amount * duration - propertyRentDiscounts[contracts[contract_id].property_id].amount;
+        uint fee = contractTransactionFee * duration;
+
+        require(msg.value >= debit_amount, "Insufficient amount");
+
+        contracts[contract_id].remaining_payments -= duration;
+
+        // Is it the last payment? Terminate the contract...
+        _processContractTermination(contract_id);
+
+
+        // Transfer the rent amount to owner (minus the platform fee)
+        balances[contracts[contract_id].owner] += (debit_amount - fee);
+
+        emit AdvanceRentPaid(contract_id, duration, debit_amount, propertyRentDiscounts[contracts[contract_id].property_id].amount, fee);
+
+        // Refund any extra amount to the tenant
+        if (msg.value > debit_amount) {
+            balances[contracts[contract_id].tenant] += (msg.value - debit_amount);
+            emit ExtraAmountRefunded(contract_id, msg.value - debit_amount);
+        }
     }
 
 
