@@ -71,7 +71,7 @@ contract TrustedPropertyListing {
         uint256 postedAt;               // Date of listing
     }
 
-    /// Public view of a listed property
+    // Public view of a listed property
     struct PropertyView {
         bool isActive;
         bool isAvailable;
@@ -88,7 +88,7 @@ contract TrustedPropertyListing {
     }
 
 
-    /// Struct to hold the property rent details
+    // Struct to hold the property rent details
     struct PropertyRent {
         uint security_deposit;                  // Initial security deposit required (in wei)
         uint rent_amount;                       // Rent amount per month (in wei)
@@ -169,17 +169,17 @@ contract TrustedPropertyListing {
     public
     {
         addPropertyOnBehalfOfOwner({
-        property_id: property_id,
-        originalOwner: msg.sender,
-        location: location,
-        propertyType: propertyType,
-        unit_number: unit_number,
-        pincode: pincode,
-        rooms: rooms,
-        bathrooms: bathrooms,
-        parking: parking,
-        // comments: comments,
-        initialAvailableDate: initialAvailableDate
+            property_id: property_id,
+            originalOwner: msg.sender,
+            location: location,
+            propertyType: propertyType,
+            unit_number: unit_number,
+            pincode: pincode,
+            rooms: rooms,
+            bathrooms: bathrooms,
+            parking: parking,
+            // comments: comments,
+            initialAvailableDate: initialAvailableDate
         });
     }
 
@@ -204,21 +204,21 @@ contract TrustedPropertyListing {
         require(!properties[propertyHashes[_propertyHash(propertyType, unit_number, pincode, location)]].doesExist, "Duplicate property hash!");
 
         properties[property_id] = Property({
-        id: property_id,
-        doesExist: true,
-        isActive: true,
-        originalOwner: originalOwner,
-        location: location,
-        propertyType: propertyType,
-        unit_number: unit_number,
-        pincode: pincode,
-        rooms: rooms,
-        bathrooms: bathrooms,
-        parking: parking,
-        // comments: comments,
-        initialAvailableDate: initialAvailableDate,
-        currentTenant: address(0x0),
-        postedAt: block.timestamp
+            id: property_id,
+            doesExist: true,
+            isActive: true,
+            originalOwner: originalOwner,
+            location: location,
+            propertyType: propertyType,
+            unit_number: unit_number,
+            pincode: pincode,
+            rooms: rooms,
+            bathrooms: bathrooms,
+            parking: parking,
+            // comments: comments,
+            initialAvailableDate: initialAvailableDate,
+            currentTenant: address(0x0),
+            postedAt: block.timestamp
         });
 
         propertyCount++;
@@ -238,18 +238,18 @@ contract TrustedPropertyListing {
     returns (PropertyView memory)
     {
         return PropertyView({
-        isActive: properties[property_id].isActive,
-        isAvailable: properties[property_id].currentTenant == address(0x0),
-        location: properties[property_id].location,
-        propertyType: properties[property_id].propertyType,
-        unit_number: properties[property_id].unit_number,
-        pincode: properties[property_id].pincode,
-        rooms: properties[property_id].rooms,
-        bathrooms: properties[property_id].bathrooms,
-        parking: properties[property_id].parking,
-        originalOwner: properties[property_id].originalOwner,
-        currentRent: propertyRents[property_id].rent_amount,
-        currentSecurity: propertyRents[property_id].security_deposit
+            isActive: properties[property_id].isActive,
+            isAvailable: properties[property_id].currentTenant == address(0x0),
+            location: properties[property_id].location,
+            propertyType: properties[property_id].propertyType,
+            unit_number: properties[property_id].unit_number,
+            pincode: properties[property_id].pincode,
+            rooms: properties[property_id].rooms,
+            bathrooms: properties[property_id].bathrooms,
+            parking: properties[property_id].parking,
+            originalOwner: properties[property_id].originalOwner,
+            currentRent: propertyRents[property_id].rent_amount,
+            currentSecurity: propertyRents[property_id].security_deposit
         });
     }
 
@@ -267,9 +267,9 @@ contract TrustedPropertyListing {
     {
         properties[property_id].isActive = true;
         propertyRents[property_id] = PropertyRent({
-        security_deposit: security_deposit,
-        rent_amount: rent_amount,
-        updatedAt: block.timestamp
+            security_deposit: security_deposit,
+            rent_amount: rent_amount,
+            updatedAt: block.timestamp
         });
         return true;
     }
@@ -315,6 +315,16 @@ contract TrustedPropertyListing {
         return true;
     }
 
+
+    function _setCurrentTenant (
+        string memory property_id, address tenant)
+    internal
+    propertyExists(property_id)
+    propertyIsActive(property_id)
+    {
+        properties[property_id].currentTenant = tenant;
+    }
+
 }
 
 
@@ -350,7 +360,7 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
         uint8 duration;                         // Duration of the agreement (in months)
         uint8 remaining_payments;               // Count of monthly payments due
         uint security_deposit_balance;          // Current balance of security deposit
-        bytes10 start_date;                     // Contract start date (format: yyyy-mm-dd)
+        string start_date;                      // Contract start date (format: yyyy-mm-dd)
         uint8 duration_extension_request;       // Duration (in months) for contract extension requested by Tenant
         uint256 createdAt;                      // Contract creation timestamp
     }
@@ -422,7 +432,7 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
     }
 
     modifier activeContractOnly(uint contract_id) {
-        require(contracts[contract_id].status == AgreementStatus.Active, "This is only allowed for active contracts");
+        require(contracts[contract_id].status == AgreementStatus.Active, "Only allowed for active contracts. Check status.");
         _;
     }
 
@@ -441,7 +451,7 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
         string memory property_id,
         address tenant,
         uint8 duration,
-        bytes10 start_date
+        string memory start_date
     )
     public
     propertyOwnerOnly(property_id)
@@ -450,22 +460,26 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
         require(isPropertyAvailable(property_id), "Property not available for renting");
         require(propertyRents[property_id].rent_amount > contractTransactionFee, "Rent must be more than fee!");
         require(propertyRents[property_id].security_deposit > contractTransactionFee, "Security deposit must be more than fee!");
+        require(duration > 0, "Contract duration of zero months not allowed");
 
         contracts[contract_id] = RentContract({
-        doesExist: true,
-        property_id: property_id,
-        status: AgreementStatus.DepositPending,
-        owner: msg.sender,
-        tenant: tenant,
-        security_deposit: propertyRents[property_id].security_deposit,
-        rent_amount: propertyRents[property_id].rent_amount,
-        duration: duration,
-        start_date: start_date,
-        remaining_payments: duration,
-        security_deposit_balance: 0,
-        duration_extension_request: 0,
-        createdAt: block.timestamp
+            doesExist: true,
+            property_id: property_id,
+            status: AgreementStatus.DepositPending,
+            owner: msg.sender,
+            tenant: tenant,
+            security_deposit: propertyRents[property_id].security_deposit,
+            rent_amount: propertyRents[property_id].rent_amount,
+            duration: duration,
+            start_date: start_date,
+            remaining_payments: duration,
+            security_deposit_balance: 0,
+            duration_extension_request: 0,
+            createdAt: block.timestamp
         });
+
+        // Set the current teannt of the property
+        _setCurrentTenant(property_id, tenant);
 
         emit ContractAdded(contract_id);
     }
@@ -519,12 +533,17 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
         require(msg.value >= contracts[contract_id].rent_amount, "Insufficient rent amount");
 
         contracts[contract_id].remaining_payments -= 1;
+
+        // Is it the last payment?
         if (contracts[contract_id].remaining_payments == 0) {
             // Contract over
             contracts[contract_id].status = AgreementStatus.Completed;
 
             // Refund security deposit to the Tenant
             balances[contracts[contract_id].tenant] += contracts[contract_id].security_deposit_balance;
+
+            // Reset the current teannt of the property
+            _setCurrentTenant(contracts[contract_id].property_id, address(0x0));
         }
 
         uint debit_amount = contracts[contract_id].rent_amount;
@@ -583,19 +602,19 @@ contract TrustedPropertiesBasicRentContract is TrustedPropertyListing, Ownable {
             "You are not allowed to view this contract");
 
         return RentContract({
-        doesExist: true,
-        property_id: contracts[contract_id].property_id,
-        status: contracts[contract_id].status,
-        owner: contracts[contract_id].owner,
-        tenant: contracts[contract_id].tenant,
-        security_deposit: contracts[contract_id].security_deposit,
-        rent_amount: contracts[contract_id].rent_amount,
-        duration: contracts[contract_id].duration,
-        remaining_payments: contracts[contract_id].remaining_payments,
-        security_deposit_balance: contracts[contract_id].security_deposit_balance,
-        start_date: contracts[contract_id].start_date,
-        duration_extension_request: contracts[contract_id].duration_extension_request,
-        createdAt: contracts[contract_id].createdAt
+            doesExist: true,
+            property_id: contracts[contract_id].property_id,
+            status: contracts[contract_id].status,
+            owner: contracts[contract_id].owner,
+            tenant: contracts[contract_id].tenant,
+            security_deposit: contracts[contract_id].security_deposit,
+            rent_amount: contracts[contract_id].rent_amount,
+            duration: contracts[contract_id].duration,
+            remaining_payments: contracts[contract_id].remaining_payments,
+            security_deposit_balance: contracts[contract_id].security_deposit_balance,
+            start_date: contracts[contract_id].start_date,
+            duration_extension_request: contracts[contract_id].duration_extension_request,
+            createdAt: contracts[contract_id].createdAt
         });
     }
 
