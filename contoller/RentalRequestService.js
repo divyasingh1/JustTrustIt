@@ -5,42 +5,38 @@ class RentalRequestService {
     constructor() {
     }
 
-       async  updateRentalRequest(rentalRequestId, userId, account, lms) {
+       async  updateRentalRequest(rentalRequestId, userId, publicKey, lms) {
+        return new Promise(async (resolve, reject) => {
             var rentalRequestModelInst = new RentalRequestModel();
             var propertyModelInst = new PropertyModel();
             let rentalRequest = await rentalRequestModelInst.findRentalRequest({rentalRequestId, requestApprovalDone: false});
             if(rentalRequest.length <= 0){
-                return Promise.reject("Rental request not found or is approved already");
+                return reject("Rental request not found or is approved already");
             }
-            if(rentalRequest[0].ownerUserId !== userId){
-                return Promise.reject("Rental request does not belong to the logged in user");
-            }
-            let startDate = new Date().toDateString();
-            console.log("/???",rentalRequest )
             rentalRequest =  rentalRequest[0];
-            if (rentalRequest.tenantAddress && rentalRequest.securityDeposit && rentalRequest.rentAmount && rentalRequest.duration && rentalRequest.fromAddress) {
-                lms.initializeRentContract(rentalRequest.contractId, rentalRequest.tenantAddress, rentalRequest.securityDeposit, rentalRequest.rentAmount, rentalRequest.duration, startDate, { from: rentalRequest.fromAddress })
+            let property = await propertyModelInst.findProperty({propertyId: rentalRequest.propertyId});
+
+            if (rentalRequest.tenantAddress && rentalRequest.duration) {
+                await lms.initializeRentContract(rentalRequest.contractId,rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), { from: publicKey })
                     .then(async (hash) => {
-                        console.log("/???", hash)
                         await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId});
                         await rentalRequestModelInst.updateRentalRequest(rentalRequestId, { requestApprovalDone: true });
-                        return hash;
+                        return resolve(hash);
                     })
                     .then((hash) => {
-                       return hash;
+                       return resolve(hash);
                     })
                     .catch(err => {
                         console.log(err)
-                        return Promise.reject(err);
+                        return reject(err);
                     })
             } else {
-                return Promise.reject("Invalid request");
+                return reject("Invalid request");
             }
+        })
         }
 
-   
-
-    async createRentalRequest(tenantUserId, data) {
+    async createRentalRequest(tenantUserId,publicKey, data) {
         let propertyModelInst = new PropertyModel();
         var rentalRequestModelInst = new RentalRequestModel();
         try {
@@ -49,13 +45,14 @@ class RentalRequestService {
                 return Promise.reject("Property is not available for rent");
             } 
             let property = await propertyModelInst.findProperty({ propertyId: data.propertyId, availability: true });
-            console.log(">>>>property", property)
             if (property && property.length) {
                 data.ownerUserId = property[0].userId;
                 data.tenantUserId = tenantUserId;
                 data.requestApprovalDone = false;
                 let contractId = Math.floor(Math.random() * 10000);
                 data.contractId = contractId;
+                data.tenantAddress = publicKey, 
+                data.duration = 1
                 return rentalRequestModelInst.createRentalRequest(tenantUserId, data);
             } else {
                 return Promise.reject("Property Not found")

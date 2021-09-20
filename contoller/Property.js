@@ -18,37 +18,34 @@ var PropertySchema = new mongoose.Schema({
     propertyName:{
         type: String
     },
-    houseNo:{
+    initialAvailableDate:{
         type: Number
     },
-    flatNo:{
+    propertyType:{
         type: Number
     },
-    street:{
-        type: String
-    },
-    address:{
+    location:{
         type: String
     },
     pincode:{
         type: Number
     },
-    floor:{
+    parking: {
+        type: String
+    },
+    bathrooms: {
+        type: String
+    },
+    rooms: {
+        type: String
+    },
+    unitNumber : {
+        type: String
+    },
+    securityDeposit:{
         type: Number
     },
-    KYC: {
-        type: String
-    },
-    latitude: {
-        type: String
-    },
-    longitude: {
-        type: String
-    },
-    rentPerMonth: {
-        type: Number
-    },
-    securityDepositAmount: {
+    rentAmount:{
         type: Number
     },
     availability: {
@@ -60,6 +57,9 @@ var PropertySchema = new mongoose.Schema({
     timestamps: true
 });
 
+
+
+   
 mongoose.model('properties',PropertySchema);
 
 module.exports = mongoose.model('properties');

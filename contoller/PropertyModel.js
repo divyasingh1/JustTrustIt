@@ -1,6 +1,5 @@
 var Property = require('./Property');
 var Promise = require('bluebird');
-const { v4: uuidv4 } = require('uuid');
 
 class PropertyModel {
     constructor() {
@@ -23,8 +22,6 @@ class PropertyModel {
     }
 
     createProperty(details) {
-        details._id = uuidv4();
-        details.propertyId = uuidv4();
         return new Promise(function (resolve, reject) {
             return Property.create(details, function (err, property) {
                 if (err) {

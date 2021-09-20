@@ -8,7 +8,7 @@ router.use(bodyParser.json());
 
 const Web3 = require('web3');
 const contract = require('truffle-contract');
-const artifacts = require('../build/TrustedPropertiesBasicContract.json');
+const artifacts = require('../build/TrustedPropertiesBasicRentContract.json');
 if (typeof web3 !== 'undefined') {
     var web3 = new Web3(web3.currentProvider)
   } else {
@@ -21,15 +21,14 @@ LMS.setProvider(web3.currentProvider)
 router.patch('/:rentalRequestId',async function (req, res) {
     var rentalRequestServiceInst = new RentalRequestService();
     req.userId = req.user.userId;
-    const accounts = await web3.eth.getAccounts();
+    req.publicKey = req.user.publicKey;
     const lms = await LMS.deployed();
-    return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId, req.userId, accounts, lms)
+    return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId, req.userId,  req.publicKey, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Rental request Approved successfully"});
         })
         .catch((err) => {
-            console.log(err, "???????")
-            res.status(400).send({ status: "Failed" , message: "Rental request couldn't be Approved successfully", error: err});
+            res.status(500).send({ status: "Failed" , message: "Rental request couldn't be Approved successfully", error: err});
         });
 });
 
@@ -40,7 +39,7 @@ router.post('/', function (req, res) {
     if(!req.body.propertyId){
         return res.status(400).send({ status: "Failed" , message: "PropertyId is required"});
     }
-    return rentalRequestServiceInst.createRentalRequest(req.userId, req.body)
+    return rentalRequestServiceInst.createRentalRequest(req.userId, req.user.publicKey, req.body)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Rental request Sent successfully",data});
         })

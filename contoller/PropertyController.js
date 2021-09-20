@@ -8,7 +8,7 @@ router.use(bodyParser.json());
 
 const Web3 = require('web3');
 const contract = require('truffle-contract');
-const artifacts = require('../build/TrustedPropertiesBasicContract.json');
+const artifacts = require('../build/TrustedPropertiesBasicRentContract.json');
 if (typeof web3 !== 'undefined') {
     var web3 = new Web3(web3.currentProvider)
   } else {
@@ -28,16 +28,46 @@ router.patch('/:propertyId', function (req, res) {
         });
 });
 
-router.post('/', function (req, res) {
+router.post('/setRent/:propertyId', async function (req, res) {
+    var propertyServiceInst = new PropertyService();
+    const lms = await LMS.deployed();
+    return propertyServiceInst.setRent(req.params.propertyId, req.body, req.user.publicKey, lms)
+        .then((data) => {
+            res.send({ "status": "SUCCESS",  message: "Rent set successfully" });
+        })
+        .catch((err) => {
+            res.status(400).send({ status: "Failed" ,  message: "Rent Couldn't be set successfully", error: err});
+        });
+});
+
+ router.post('/payrent/:contractId', async function (req, res) {
+        var propertyServiceInst = new PropertyService();
+        req.userId = req.user.userId;
+
+        let { contractId } = req.params;
+        const lms = await LMS.deployed();
+        return propertyServiceInst.payrent(req.userId, contractId, lms, res)
+        .then((data) => {
+            res.send({ "status": "SUCCESS" , message: "rent paid Successfully", data});
+        })
+        .catch((err) => {
+            res.status(400).send({ status: "Failed",  message: "pay rent failed", error: err });
+        });
+
+    });
+
+router.post('/', async function (req, res) {
     var propertyServiceInst = new PropertyService();
     req.userId = req.user.userId;
-    return propertyServiceInst.createProperty(req.userId, req.body)
+    req.publicKey = req.user.publicKey;
+    const lms = await LMS.deployed();
+    return propertyServiceInst.createProperty(req.userId, req.body, lms, req.publicKey)
         .then((data) => {
             res.send({ "status": "SUCCESS" , message: "Property Created Successfully", data});
         })
         .catch((err) => {
             console.log("Error in create Property", err);
-            res.status(400).send({ status: "Failed",  message: "Property Couldn't be fetched successfully", error: err });
+            res.status(400).send({ status: "Failed",  message: "Property Couldn't be created successfully", error: err });
         });
 });
 
@@ -45,7 +75,6 @@ router.post('/', function (req, res) {
         var propertyServiceInst = new PropertyService();
         req.userId = req.user.userId;
         let { contractId } = req.params;
-        const accounts = await web3.eth.getAccounts();
         const lms = await LMS.deployed();
         return propertyServiceInst.depositSecurity(req.userId, contractId, lms)
         .then((data, data2) => {
@@ -53,10 +82,9 @@ router.post('/', function (req, res) {
             if(data == "Security already deposited"){
                res.status(400).send({ status: "Failed",  message: data, error: err });
             }
-            res.send({ "status": "SUCCESS" , message: "rent deposited Successfully", data});
+            res.send({ "status": "SUCCESS" , message: "rent deposited Successfully"});
         })
         .catch((err) => {
-            console.log("Error in deposit rent====================", err);
             res.status(400).send({ status: "Failed",  message: "deposit security failed", error: err });
         });
     })
@@ -70,11 +98,9 @@ router.post('/', function (req, res) {
         const lms = await LMS.deployed();
         return propertyServiceInst.payrent(req.userId, contractId, lms, res)
         .then((data) => {
-            console.log(">2>>>>>>", data)
             res.send({ "status": "SUCCESS" , message: "rent paid Successfully", data});
         })
         .catch((err) => {
-            console.log("Error in pay rent====================", err);
             res.status(400).send({ status: "Failed",  message: "pay rent failed", error: err });
         });
 

@@ -1,6 +1,6 @@
 const Web3 = require('web3');
 const contract = require('truffle-contract');
-const artifacts = require('./build/TrustedPropertiesBasicContract.json');
+const artifacts = require('./build/TrustedPropertiesBasicRentContract.json');
 
 
 async function lms (){
