@@ -17,6 +17,7 @@ if (typeof web3 !== 'undefined') {
 const LMS = contract(artifacts)
 LMS.setProvider(web3.currentProvider)
 
+//working
 router.patch('/:propertyId', function (req, res) {
     var propertyServiceInst = new PropertyService();
     return propertyServiceInst.updateProperty(req.params.propertyId, req.body)
@@ -28,6 +29,7 @@ router.patch('/:propertyId', function (req, res) {
         });
 });
 
+//working
 router.post('/setRent/:propertyId', async function (req, res) {
     var propertyServiceInst = new PropertyService();
     const lms = await LMS.deployed();
@@ -40,22 +42,24 @@ router.post('/setRent/:propertyId', async function (req, res) {
         });
 });
 
+//not working
  router.post('/payrent/:contractId', async function (req, res) {
         var propertyServiceInst = new PropertyService();
         req.userId = req.user.userId;
 
         let { contractId } = req.params;
         const lms = await LMS.deployed();
-        return propertyServiceInst.payrent(req.userId, contractId, lms, res)
+        return propertyServiceInst.payrent(req.userId, contractId, lms)
         .then((data) => {
-            res.send({ "status": "SUCCESS" , message: "rent paid Successfully", data});
+            res.send({ "status": "SUCCESS" , message: "Rent paid Successfully", data});
         })
         .catch((err) => {
-            res.status(400).send({ status: "Failed",  message: "pay rent failed", error: err });
+            res.status(400).send({ status: "Failed",  message: "Rent payment failed", error: err });
         });
 
     });
 
+    //working
 router.post('/', async function (req, res) {
     var propertyServiceInst = new PropertyService();
     req.userId = req.user.userId;
@@ -71,6 +75,7 @@ router.post('/', async function (req, res) {
         });
 });
 
+//working
     router.post('/depositSecurity/:contractId', async function (req, res) {
         var propertyServiceInst = new PropertyService();
         req.userId = req.user.userId;
@@ -78,10 +83,6 @@ router.post('/', async function (req, res) {
         const lms = await LMS.deployed();
         return propertyServiceInst.depositSecurity(req.userId, contractId, lms)
         .then((data, data2) => {
-            console.log("data", data, typeof data)
-            if(data == "Security already deposited"){
-               res.status(400).send({ status: "Failed",  message: data, error: err });
-            }
             res.send({ "status": "SUCCESS" , message: "rent deposited Successfully"});
         })
         .catch((err) => {
@@ -89,38 +90,33 @@ router.post('/', async function (req, res) {
         });
     })
 
-    router.post('/payrent/:contractId', async function (req, res) {
-        var propertyServiceInst = new PropertyService();
-        req.userId = req.user.userId;
-
-        let { contractId } = req.params;
-        const accounts = await web3.eth.getAccounts();
-        const lms = await LMS.deployed();
-        return propertyServiceInst.payrent(req.userId, contractId, lms, res)
-        .then((data) => {
-            res.send({ "status": "SUCCESS" , message: "rent paid Successfully", data});
-        })
-        .catch((err) => {
-            res.status(400).send({ status: "Failed",  message: "pay rent failed", error: err });
-        });
-
-    });
-
-    
-router.get('/getContractDetails/:contractId/:0x473d72D0E77f6d934CEE27821A4349e8cD403dDc', async function (req, res) {
+//need mapping 
+router.get('/getContractDetails/:contractId/:address', async function (req, res) {
     var propertyServiceInst = new PropertyService();
     req.userId = req.user.userId;
 
     let { contractId, address } = req.params;
-    const accounts = await web3.eth.getAccounts();
     const lms = await LMS.deployed();
     return propertyServiceInst.getContractDetails(req.userId, contractId, address, lms)
     .then((data) => {
-        res.send({ "status": "SUCCESS" , message: "Contract Details Successfully", data});
+        res.send({ "status": "SUCCESS" , message: "Got Contract Details Successfully", data});
     })
     .catch((err) => {
-        res.status(400).send({ status: "Failed",  message: "Contract Details error", error: err });
+        res.status(500).send({ status: "Failed",  message: "Contract Details fetching error", error: err });
     });
 })
+
+//working
+router.post('/withdrawFunds', async function (req, res) {
+    var propertyServiceInst = new PropertyService();
+    const lms = await LMS.deployed();
+    return propertyServiceInst.withdrawFunds(req.user.publicKey, lms)
+        .then((data) => {
+            res.send({ "status": "SUCCESS",  message: "Funds withdrawn successfully" });
+        })
+        .catch((err) => {
+            res.status(500).send({ status: "Failed" ,  message: "Error in withdraw funds", error: err});
+        });
+});
 
 module.exports = router;

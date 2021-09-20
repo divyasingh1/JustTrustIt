@@ -30,10 +30,9 @@ class PropertyService {
                 if (rentalRequest.length <= 0) {
                     return Promise.reject("Rental request not found or is not approved");
                 }
-                if (rentalRequest[0].ownerUserId !== userId) {
-                    return Promise.reject("Rental request does not belong to the logged in user");
-                }
-                lms.depositSecurity(contractId, { from: rentalRequest[0].tenantAddress, value: rentalRequest[0].securityDeposit })
+                var propertyModelInst = new PropertyModel();
+                let property = await propertyModelInst.findProperty({propertyId: rentalRequest[0].propertyId});
+                lms.depositSecurity(contractId, { from: rentalRequest[0].tenantAddress, value: property[0].securityDeposit })
                     .then((data, _address) => {
                         return resolve(data);
                     })
@@ -55,13 +54,12 @@ class PropertyService {
                 if (rentalRequest.length <= 0) {
                     return Promise.reject("Rental request not found or is not approved");
                 }
-                if (rentalRequest[0].ownerUserId !== userId) {
-                    return Promise.reject("Rental request does not belong to the logged in user");
-                }
-                lms.payRent(contractId, { from: rentalRequest[0].tenantAddress, value: rentalRequest[0].rentAmount })
-                    .then(async (_hash, _address) => {
-                        console.log(hash)
-                        return resolve(_hash);
+                var propertyModelInst = new PropertyModel();
+                let property = await propertyModelInst.findProperty({propertyId: rentalRequest[0].propertyId});
+
+                lms.payRent(contractId, { from: rentalRequest[0].tenantAddress, value: property[0].rentAmount })
+                    .then(async (data) => {
+                        return resolve(data);
                     })
                     .catch(err => {
                         console.log(err)
@@ -154,6 +152,23 @@ class PropertyService {
                 lms.setRent(propertyId, details.securityDeposit , details.rentAmount, { from: address })
                     .then(async (data) => {
                         await propertyModelInst.updateProperty(propertyId, {rentAmount: details.rentAmount,securityDeposit: details.securityDeposit});
+                        resolve(data);
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return reject(err)
+                    })
+            } else {
+                return reject("wrong input")
+            }
+        })
+    }
+
+    withdrawFunds(address, lms){
+        return new Promise(async (resolve, reject) => {
+            if (address) {
+                lms.withdraw({ from: address })
+                    .then(async (data) => {
                         resolve(data);
                     })
                     .catch(err => {
