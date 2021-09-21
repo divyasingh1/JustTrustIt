@@ -5,8 +5,7 @@ var UserSchema = new mongoose.Schema({
         require: true
     },
     emailId:{
-        type: String,
-        require: true
+        type: String
     },
     publicKey:{
         type: String,

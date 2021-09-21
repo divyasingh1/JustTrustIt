@@ -8,8 +8,8 @@ router.use(bodyParser.json());
 
 router.post('/', function (req, res) {
     var UserServiceInst = new UserService();
-    if(!req.body.emailId || !req.body.publicKey){
-        res.status(400).send({ status: "Failed",  message:"emailId and publicKey are required" });
+    if(!req.body.publicKey){
+        res.status(400).send({ status: "Failed",  message:"PublicKey is required" });
     }
     return UserServiceInst.createUser(req.body)
         .then((data) => {

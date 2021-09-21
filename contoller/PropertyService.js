@@ -76,7 +76,22 @@ class PropertyService {
             if (contractId) {
                 lms.getContractDetails(contractId, { from: address })
                     .then(async (data) => {
-                        return resolve(data)
+                        let res = {
+                            doesExist: true,
+                            property_id: data[1],
+                            status: data[2],
+                            owner: data[3],
+                            tenant: data[4],
+                            security_deposit: data[5],
+                            rent_amount: data[6],
+                            duration: data[7],
+                            remaining_payments: data[8],
+                            security_deposit_balance: data[9],
+                            start_date: data[10],
+                            duration_extension_request: data[12],
+                            createdAt: data[13]
+                        }
+                        return resolve(res)
                     })
                     .catch(err => {
                         console.log(err)
