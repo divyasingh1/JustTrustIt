@@ -68,7 +68,7 @@ router.patch('/extendContractDurationConfirm/:contractId',async function (req, r
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
     const lms = await LMS.deployed();
-    return rentalRequestServiceInst.extendContractDurationConfirm(req.userId,  req.publicKey, req.params.contractId, lms)
+    return rentalRequestServiceInst.extendContractDurationConfirm(req.userId,  req.publicKey, req.params.contractId,  req.body.extensionDuration, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Extend Contract Duration Request confirmed"});
         })

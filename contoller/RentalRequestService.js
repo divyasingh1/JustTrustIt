@@ -79,9 +79,9 @@ class RentalRequestService {
         })
     }
 
-    extendContractDurationConfirm(userId, address, contractId, lms) {
+    extendContractDurationConfirm(userId, address, contractId, extensionDuration, lms) {
         return new Promise(async (resolve, reject) => {
-            if (address && contractId) {
+            if (address && contractId && extensionDuration) {
                 lms.extendContractDurationConfirm(contractId, extensionDuration, { from: address })
                     .then(async (data) => {
                         resolve(data);
