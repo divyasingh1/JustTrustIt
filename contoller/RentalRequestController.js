@@ -77,4 +77,19 @@ router.patch('/extendContractDurationConfirm/:contractId',async function (req, r
         });
 });
 
+router.get('/getPendingFunds',async function (req, res) {
+    var rentalRequestServiceInst = new RentalRequestService();
+    req.userId = req.user.userId;
+    req.publicKey = req.user.publicKey;
+    const lms = await LMS.deployed();
+    return rentalRequestServiceInst.getPendingFunds(req.userId, req.user.publicKey, lms)
+        .then((data) => {
+            res.send({ "status": "SUCCESS", message: "Got pending funds", data});
+        })
+        .catch((err) => {
+            res.status(500).send({ status: "Failed" , message: "Get pending funds failed", error: err});
+        });
+        })
+    
+
 module.exports = router;
