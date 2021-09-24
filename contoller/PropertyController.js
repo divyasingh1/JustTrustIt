@@ -106,13 +106,13 @@ router.post('/', async function (req, res) {
     })
 
 //need mapping 
-router.get('/getContractDetails/:contractId/:address', async function (req, res) {
+router.get('/getContractDetails/:contractId', async function (req, res) {
     var propertyServiceInst = new PropertyService();
     req.userId = req.user.userId;
 
-    let { contractId, address } = req.params;
+    let { contractId} = req.params;
     const lms = await LMS.deployed();
-    return propertyServiceInst.getContractDetails(req.userId, contractId, address, lms)
+    return propertyServiceInst.getContractDetails(req.userId, contractId, req.user.publicKey, lms)
     .then((data) => {
         res.send({ "status": "SUCCESS" , message: "Got Contract Details Successfully", data});
     })
