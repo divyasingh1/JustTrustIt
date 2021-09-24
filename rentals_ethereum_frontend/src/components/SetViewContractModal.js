@@ -68,15 +68,15 @@ const SetViewContractModal = ({isViewContractVisible,setIsViewContractVisible,se
                                             </tr>
                                             <tr>
                                               <th>SECURITY_AMOUNT</th>
-                                              <td scope="row">{responseData.security_deposit} months</td>
+                                              <td scope="row">Rs {responseData.security_deposit}</td>
                                             </tr>
                                             <tr>
                                               <th>RENT_AMOUNT</th>
-                                              <td scope="row">{responseData.rent_amount} months</td>
+                                              <td scope="row">Rs {responseData.rent_amount}</td>
                                             </tr>
                                             <tr>
                                               <th>START_DATE</th>
-                                              <td scope="row">{responseData.start_date} months</td>
+                                              <td scope="row">2021-09-25</td>
                                             </tr>
                                           </tbody>
                                         </table>

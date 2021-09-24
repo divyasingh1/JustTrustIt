@@ -44,7 +44,7 @@ const RentalRequestModal = ({isVisible,setIsVisible,propId})=> {
                 <div className="row my-1">
                     <div className="col-md-4">
                         <label htmlFor="duration" className="form-label">Duration</label>
-                        <input type="text" className="form-control" name={"duration"} id="duration"
+                        <input type="text" className="form-control" name={"duration"} id="duration" placeholder="Months"
                                onChange={e => setDuration(parseInt(e.target.value))}
                                required/>
                         <div className="invalid-feedback">
