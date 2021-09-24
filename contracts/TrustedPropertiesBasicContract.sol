@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ~0.8.0;
 
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 
 
@@ -77,11 +79,115 @@ contract Ownable {
 
 
 // ================================================================================
+//              CONTRACT: TPRentalKey NFT Metadata (On-Chain)
+// ================================================================================
+
+/**
+ * On-chain metadata for NFT TPRentalKey
+ */
+contract TPRentalKeyMetadataOnChain {
+
+    struct TPRentalKeyMetadata {
+        uint256 startTime;
+        uint256 endTime;
+    }
+
+    // Mapping of ERC721 TPRentalKey NFT to it's metadata
+    mapping (uint256 => TPRentalKeyMetadata) internal tprkey_meta_map;
+
+    /**
+     * Is the RentalToken still valid?
+     */
+    function _isValid(
+        uint256 token_id,
+        uint256 timestamp)
+    internal
+    view
+    returns (bool) {
+        return timestamp >= tprkey_meta_map[token_id].startTime &&
+            timestamp <= tprkey_meta_map[token_id].endTime;
+    }
+
+
+    /**
+     * Set the RentalToken metadata
+     */
+    function _setMetadata(
+        uint256 token_id,
+        uint256 startTime,
+        uint256 endTime)
+    internal {
+        tprkey_meta_map[token_id].startTime = startTime;
+        tprkey_meta_map[token_id].endTime = endTime;
+    }
+
+
+    /**
+     * Returns the RentalToken metadata
+     */
+    function getMetadata(
+        uint256 token_id)
+    public
+    view
+    returns (uint256 startTime, uint256 endTime) {
+        return (
+            tprkey_meta_map[token_id].startTime,
+            tprkey_meta_map[token_id].endTime
+        );
+    }
+
+}
+
+
+
+
+// ================================================================================
+//              CONTRACT: TPRentalKey ERC721 NFT
+// ================================================================================
+
+/**
+ * TPRentalKey ERC721 NFT: For tokenizing the rental access for tenants
+ */
+contract TPRentalKey is ERC721, TPRentalKeyMetadataOnChain {
+
+    using Counters for Counters.Counter;
+    Counters.Counter private _tokenIds;
+
+    constructor()
+    ERC721("Item", "ITM")
+    TPRentalKeyMetadataOnChain() {
+    }
+
+
+    /// Mint a new TPRentalKey token and assign it to the tenant
+    function mintRental(
+        address tenant,
+        uint256 startTime,
+        uint256 endTime)
+    internal
+    returns (uint256)
+    {
+        _tokenIds.increment();
+
+        uint256 newTokenID = _tokenIds.current();
+
+        _setMetadata(newTokenID, startTime, endTime);
+        _safeMint(tenant, newTokenID);
+
+        return newTokenID;
+    }
+
+}
+
+
+
+
+// ================================================================================
 //              CONTRACT: Unique Properties
 // ================================================================================
 
 /**
- * @title Utility contract to ensure unique properties
+ * @title Utility contract to ensure the listed properties are unique
  */
 contract UniqueProperty {
 
@@ -541,7 +647,7 @@ contract TrustedPropertyListing is UniqueProperty {
 
 
 // ============================================================================
-//              CONTRACT: Rent Agreement Contract
+//              MAIN CONTRACT: Rent Agreement Contract
 // ============================================================================
 
 /**
