@@ -16,13 +16,12 @@ const TenantRentalRequest = () => {
     const user = getUser();
 
     const [isViewContractVisible, setIsViewContractVisible] = useState(false);
-    const [selectedPropertyId,setSelectedPropertyId] = useState(null);
+    const [selectedContractId,setSelectedContractId] = useState(null);
 
-    const viewContract = (propId) => {
-            setSelectedPropertyId(propId);
+    const viewContract = (contractId) => {
+            setSelectedContractId(contractId);
             setIsViewContractVisible(true);
             console.log(setIsViewContractVisible);
-
         }
 
     const sendRentalDepositRequest = async contractId =>{
@@ -141,7 +140,7 @@ const TenantRentalRequest = () => {
                                                     item?.requestApprovalDone ==='true'?
                                                         <>
                                                        <span className="mx-1">
-                                                           <button onClick={()=>viewContract(item?.propertyId)} className={"btn btn-primary text-white fw-bold"}>View Contract</button>
+                                                           <button onClick={()=>viewContract(item?.contractId)} className={"btn btn-primary text-white fw-bold"}>View Contract</button>
                                                        </span>
                                                        </>
                                                         :
@@ -169,8 +168,8 @@ const TenantRentalRequest = () => {
             </div>
 
             {
-                            isViewContractVisible && <SetViewContractModal isViewContractVisible={isViewContractVisible} setIsViewContractVisible={setIsViewContractVisible} selectedPropertyId={selectedPropertyId}/>
-                        }
+               isViewContractVisible && <SetViewContractModal isViewContractVisible={isViewContractVisible} setIsViewContractVisible={setIsViewContractVisible} selectedContractId={selectedContractId}/>
+            }
         </div>
     );
 }
