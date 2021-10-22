@@ -1,4 +1,4 @@
-# tracking_prada_on_ethereum_blockchain
+# deployement
 npm i
 
 -- we have to initialize Truffle for use in our smart contract by using the Truffle package we installed globally

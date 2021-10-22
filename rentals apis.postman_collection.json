@@ -1,0 +1,688 @@
+{
+	"info": {
+		"_postman_id": "34cb4967-a239-4be7-979e-0e0357958220",
+		"name": "rentals apis",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "get property by id",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0x45994449",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/noauth/property/list",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"noauth",
+						"property",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update Property",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0x473d72D0E77f6d934CEE27821A4349e8cD403dDc",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"propertyName\" : \"123shalimarford\",\r\n\"houseNo\" : 12777,\r\n\"flatNo\" : 23,\r\n \"street\" : \"stree2 \",\r\n \"address\" : \"LP0222, indira nagar\",\r\n \"pincode\" : 226022,\r\n\"floor\" : 1,\r\n\"KYC\" : \"1234-abc\",\r\n\"latitude\" : \"1.1\",\r\n\"longitude\" : \"2.5\",\r\n\"rentPerMonth\": 342,\r\n\"securityDepositAmount\": 92\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/property/05d60c26-af65-4cea-ad2b-361fa35ef6ae",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property",
+						"05d60c26-af65-4cea-ad2b-361fa35ef6ae"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "rental request creation",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0x8b1aBeeFEc56C5631190B8D5bFc2Fd012c1A2605",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"propertyId\": \"6234dc90-6af1-4544-b4c4-205d4d9468c6\",\r\n    \"duration\": 3\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/rental_request",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"rental_request"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "confirm rental reqest",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/rental_request/b7fb0a87-a596-4f74-a81a-6712d51e0d19",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"rental_request",
+						"b7fb0a87-a596-4f74-a81a-6712d51e0d19"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get rental requests",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0x45",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/noauth/rental_request/list",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"noauth",
+						"rental_request",
+						"list"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get users",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"emailId\": \"divya22@email.com\",\r\n    \"publicKey\": \"0x45994449\",\r\n    \"userName\": \"diva\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"publicKey\": \"0x8b1aBeeFEc56C5631190B8D5bFc2Fd012c1A2605\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deposit",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0x8b1aBeeFEc56C5631190B8D5bFc2Fd012c1A2605",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/property/depositSecurity/5059",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property",
+						"depositSecurity",
+						"5059"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "payrent",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0x8b1aBeeFEc56C5631190B8D5bFc2Fd012c1A2605",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/property/payrent/5059",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property",
+						"payrent",
+						"5059"
+					],
+					"query": [
+						{
+							"key": "x-public-key",
+							"value": "0x473d72D0E77f6d934CEE27821A4349e8cD403dDc",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get contract",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/property/getContractDetails/5059/0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property",
+						"getContractDetails",
+						"5059",
+						"0xB964CBD874641Df7cB766149a1dB40501607Cd09"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create property",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n \"propertyName\" : \"shalimar\",\r\n\"rooms\" : 2,\r\n\"bathrooms\" : 2,\r\n\"unitNumber\":\"12345678\",\r\n \"parking\" : 2,\r\n \"location\" : \"LP0222, indira nagar\",\r\n \"pincode\" : \"226022\",\r\n\"initialAvailableDate\" : 20092021,\r\n\"propertyType\": 1\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/property",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get property from blockchain",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/noauth/property/6234dc90-6af1-4544-b4c4-205d4d9468c6/0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"noauth",
+						"property",
+						"6234dc90-6af1-4544-b4c4-205d4d9468c6",
+						"0xB964CBD874641Df7cB766149a1dB40501607Cd09"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "set rent",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"securityDeposit\": 200,\r\n    \"rentAmount\": 1000\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/property/setRent/6234dc90-6af1-4544-b4c4-205d4d9468c6",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property",
+						"setRent",
+						"6234dc90-6af1-4544-b4c4-205d4d9468c6"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get contract details",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0x2914Bc5c28B7321e48fA2C307bE6D5032b625C59",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8082/api/user/property/getContractDetails/3614/0x2914Bc5c28B7321e48fA2C307bE6D5032b625C59",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property",
+						"getContractDetails",
+						"3614",
+						"0x2914Bc5c28B7321e48fA2C307bE6D5032b625C59"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "withdraw funds",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/property/withdrawFunds",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property",
+						"withdrawFunds"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deactiavte or actiavte property",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/property/changeStatus/activate/6234dc90-6af1-4544-b4c4-205d4d9468c6",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"property",
+						"changeStatus",
+						"activate",
+						"6234dc90-6af1-4544-b4c4-205d4d9468c6"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "extendContractDurationRequest",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0x8b1aBeeFEc56C5631190B8D5bFc2Fd012c1A2605",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"extensionDuration\": 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/rental_request/extendContractDurationRequest/5059",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"rental_request",
+						"extendContractDurationRequest",
+						"5059"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "extendContractDurationConfirm",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"extensionDuration\": 2\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/rental_request/extendContractDurationConfirm/5059",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"rental_request",
+						"extendContractDurationConfirm",
+						"5059"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get pending funds",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-public-key",
+						"value": "0xB964CBD874641Df7cB766149a1dB40501607Cd09",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://184.105.189.233:8082/api/user/rental_request/getPendingFunds",
+					"protocol": "http",
+					"host": [
+						"184",
+						"105",
+						"189",
+						"233"
+					],
+					"port": "8082",
+					"path": [
+						"api",
+						"user",
+						"rental_request",
+						"getPendingFunds"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
