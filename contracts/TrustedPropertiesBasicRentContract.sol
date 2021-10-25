@@ -94,7 +94,25 @@ contract TrustedPropertyListing {
         uint rent_amount;                       // Rent amount per month (in wei)
         uint256 updatedAt;                      // Rent update timestamp
     }
-
+    
+   struct PropertyReview{
+        string review;
+        string reviewComment;
+        uint256 updatedAt;  
+   }
+   
+   struct PropertyKYCDetail {
+       string  KYC_doc_name;
+       string KYC_doc_id;
+       uint256 updatedAt; 
+   }
+   
+  struct PropertyMaintenance {
+        string maintenanceName;
+        string maintenanceDocName;
+        string maintenanceDocId;
+        uint256 updatedAt;                 
+    }
 
     /// Mapping of property_id to the Property data
     /// TODO: Make private
@@ -103,6 +121,12 @@ contract TrustedPropertyListing {
     /// Mapping of property_id to it's Rent data
     /// TODO: Make private
     mapping (string => PropertyRent) internal propertyRents;
+    
+    mapping (string => PropertyReview) internal propertyReviews;
+    
+     mapping (string => PropertyKYCDetail) internal propertyKYCDetails;
+    
+    mapping (string => PropertyMaintenance) internal propertyMaintenances;
 
     /// Mapping of hash of a property to property_id
     mapping (bytes32 => string) private propertyHashes;
@@ -269,6 +293,59 @@ contract TrustedPropertyListing {
         propertyRents[property_id] = PropertyRent({
         security_deposit: security_deposit,
         rent_amount: rent_amount,
+        updatedAt: block.timestamp
+        });
+        return true;
+    }
+    
+    function setReviews (
+        string memory property_id,
+        string memory review,
+        string memory reviewComment)
+    public
+    returns (bool)
+    {
+        properties[property_id].isActive = true;
+        propertyReviews[property_id] = PropertyReview({
+        review: review,
+        reviewComment: reviewComment,
+        updatedAt: block.timestamp
+        });
+        return true;
+    }
+    
+     function setKYCDetails (
+        string memory property_id,
+        string memory KYC_doc_name,
+        string memory KYC_doc_id)
+    public
+    returns (bool)
+    {
+        properties[property_id].isActive = true;
+        propertyKYCDetails[property_id] = PropertyKYCDetail({
+        KYC_doc_name: KYC_doc_name,
+        KYC_doc_id: KYC_doc_id,
+        updatedAt: block.timestamp
+        });
+        return true;
+    }
+     
+    function addMaintenance (
+        string memory property_id,
+        string memory maintenanceName,
+        string memory maintenanceDocName,
+        string memory maintenanceDocId
+        )
+    public
+    propertyIsActive(property_id)
+    propertyOwnerOnly(property_id)
+    returns (bool)
+    {
+        properties[property_id].isActive = true;
+        propertyMaintenances[property_id] = PropertyMaintenance({
+        maintenanceName: maintenanceName,
+        maintenanceDocName: maintenanceDocName,
+        maintenanceDocId: maintenanceDocId,
         updatedAt: block.timestamp
         });
         return true;
