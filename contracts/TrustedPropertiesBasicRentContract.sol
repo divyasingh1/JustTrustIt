@@ -65,7 +65,7 @@ contract TrustedPropertyListing {
         NumberOf bathrooms;
         NumberOf parking;
         // string comments;
-        uint initialAvailableDate;
+        string initialAvailableDate;
         address originalOwner;
         address currentTenant;
         uint256 postedAt;               // Date of listing
@@ -189,7 +189,7 @@ contract TrustedPropertyListing {
         NumberOf bathrooms,
         NumberOf parking,
     // string memory comments,
-        uint initialAvailableDate)
+        string memory initialAvailableDate)
     public
     {
         addPropertyOnBehalfOfOwner({
@@ -220,7 +220,7 @@ contract TrustedPropertyListing {
         NumberOf bathrooms,
         NumberOf parking,
     // string memory comments,
-        uint initialAvailableDate)
+        string memory initialAvailableDate)
     public
     propertyDoesNotExist(property_id)
     {
