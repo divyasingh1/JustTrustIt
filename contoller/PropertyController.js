@@ -82,6 +82,7 @@ router.post('/', async function (req, res) {
     const lms = await LMS.deployed();
     return propertyServiceInst.createProperty(req.userId, req.body, lms, req.publicKey)
         .then((data) => {
+            console.log("Property created successfully")
             res.send({ "status": "SUCCESS" , message: "Property Created Successfully", data});
         })
         .catch((err) => {

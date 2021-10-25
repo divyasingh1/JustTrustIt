@@ -19,10 +19,10 @@ var PropertySchema = new mongoose.Schema({
         type: String
     },
     initialAvailableDate:{
-        type: Number
+        type: String
     },
     propertyType:{
-        type: Number
+        type: String
     },
     location:{
         type: String

@@ -106,10 +106,26 @@ class PropertyService {
     createProperty(userId, details, lms, address) {
         details.userId = userId;
         details.propertyId = uuidv4();
+        let PropertyType = {
+            "House": "0",                         //  0 House
+            "ApartmentAndUnit": "1",              //  1 Apartment and unit
+            "Townhouse": "2",                     //  2 Townhouse
+            "Villa": "3",                         //  3 Villa
+            "BlockOfUnits": "4",                  //  4 Block of units (?)
+            "RetirementLiving": "5"               //  5 Retirement living
+        }
+
         return new Promise(async (resolve, reject) => {
             if (details) {
-                lms.addProperty(details.propertyId, details.propertyType, details.unitNumber, details.pincode, details.location, details.rooms, details.bathrooms, details.parking, details.initialAvailableDate, { from: address })
+                lms.addProperty(details.propertyId, parseInt(PropertyType[details.propertyType]), details.unitNumber, details.pincode, details.location, details.rooms, details.bathrooms, details.parking, details.initialAvailableDate, { from: address })
                     .then(async (data) => {
+                        return data;
+                    })
+                    .catch(err => {
+                        console.log("error while creating property on blockchain", err)
+                        return reject(err)
+                    })
+                    .then((data) => {
                         var propertyModelInst = new PropertyModel();
                         details.hash = data;
                         details._id = uuidv4();
@@ -119,7 +135,7 @@ class PropertyService {
                         return this.setRent(details.propertyId, details, address, lms)
                     })
                     .catch(err => {
-                        console.log(err)
+                        console.log("error while creating property in db", err)
                         return reject(err)
                     })
             } else {
@@ -140,7 +156,10 @@ class PropertyService {
             dbFilter.pincode = filter.pincode;
         }
         if (filter.tenantUserId) {
-            dbFilter.tenantUserId = tenantUserId;
+            dbFilter.tenantUserId = filter.tenantUserId;
+        }
+        if (filter.availability) {
+            dbFilter.availability = filter.availability;
         }
         var propertyModelInst = new PropertyModel();
         return propertyModelInst.findProperty(dbFilter);
