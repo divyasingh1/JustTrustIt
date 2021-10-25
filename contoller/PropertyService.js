@@ -115,6 +115,9 @@ class PropertyService {
                         details._id = uuidv4();
                         return resolve(propertyModelInst.createProperty(details));
                     })
+                    .then(()=>{
+                        return this.setRent(details.propertyId, details, address, lms)
+                    })
                     .catch(err => {
                         console.log(err)
                         return reject(err)
