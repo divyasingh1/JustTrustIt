@@ -2,6 +2,8 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 import {LibCommon} from "./LibCommon.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 library LibProperty {   
     
@@ -14,17 +16,22 @@ library LibProperty {
     }
 
     struct Property {
-        string m_strPropertyId;
+        string m_iPropertyId;
         string m_strAddress; 
         string m_objDateOfPosting;
         bool m_bIsActive;
-        address m_addrOwner;
         address[] m_arrTenantList;
     }
 
 }
 
-contract TrustedProperty {
+contract TrustedProperty is ERC721{
+    
+    using Counters for Counters.Counter;
+    Counters.Counter private gc_iTokenCounter;
+    
+    address public ADMIN;
+    
     struct PropertyDetails{
         LibProperty.Property m_objProperty;
         LibProperty.PropertyType m_ePropertytype;
@@ -33,10 +40,8 @@ contract TrustedProperty {
     mapping(string => PropertyDetails) private gc_mapProperties;
     mapping(string => LibCommon.Review[]) private gc_mapReviews;
     mapping(string => LibCommon.Document[]) private gc_mapMaintenenceDocuments;
-    mapping (bytes32 => string) private gc_mapPropertyHashes;
-    
-    uint32 public gc_iPropertyCount = 0;
-    uint32 public gc_iActivePropertyCount = 0;
+    mapping (bytes32 => bool) private gc_mapPropertyHashes;
+    mapping (string => uint256) private gc_mapPidToTokenId;
     
     modifier modOnlyTenantCanAccess(string memory propertyId) {
         bool tenantFound = false;
@@ -48,22 +53,39 @@ contract TrustedProperty {
                 break;
             } 
         }
-        require(tenantFound, "Not the Owner, Authorization failed.");
+        require(tenantFound, "Not the Tenant, Authorization failed.");
         _;
     }
     
+    event evtDebug(bool val, bytes32 hash);
+    event evtDebugPD(string m_strAddress, string m_objDateOfPosting, LibProperty.PropertyType m_ePropertytype);
     modifier modOnlyOwnerCanAccess(string memory propertyId) {
-        require(gc_mapProperties[propertyId].m_objProperty.m_addrOwner == msg.sender, "Not an Existing or Previous Tenant, Authorization failed.");
+        require(ownerOf(gc_mapPidToTokenId[propertyId]) == msg.sender, "Not an Owner, Authorization failed.");
+        _;
+    }
+    
+    modifier modAdminOwnerCanAccess() {
+        require(ADMIN == msg.sender, "Not an Admin, Authorization failed.");
         _;
     }
 
     modifier modPropertyShouldExist(string memory propertyId) {
-        require(keccak256(bytes(gc_mapProperties[propertyId].m_objProperty.m_strPropertyId)) == keccak256(bytes(propertyId)), "Property does not exist");
+        require(gc_mapPropertyHashes[bytGeneratePropertyHashByObject(gc_mapProperties[propertyId])], "Property does not exist");
+        _;
+    }
+    
+    modifier modFromShouldBeOwner(string memory propertyId, address from) {
+        require(ownerOf(gc_mapPidToTokenId[propertyId]) == from, "Property Does not belong to #From address");
+        _;
+    }
+    
+    modifier modHashShouldBeUnique(string memory addr, int propertyType) {
+        require(!gc_mapPropertyHashes[bytGeneratePropertyHash(addr, propertyType)], "Hash is not unique, Same Property exists with a different Token");
         _;
     }
 
     modifier modPropertyShouldNotExist(string memory propertyId) {
-        require(!(keccak256(bytes(gc_mapProperties[propertyId].m_objProperty.m_strPropertyId)) == keccak256(bytes(propertyId))), "Property already exists");
+        require(gc_mapPropertyHashes[bytGeneratePropertyHashByObject(gc_mapProperties[propertyId])] == false, "Property already exists");
         _;
     }
 
@@ -77,44 +99,60 @@ contract TrustedProperty {
         _;
     }
     
-    event evtAddedProperty(address ownerAddress, string propertyId);
+    event evtAddedProperty(address ownerAddress, bytes32 hash, string propertyId);
     event evtRemovedProperty(address ownerAddress, string propertyId);
+    constructor(string memory name, string memory symbol) public ERC721(name, symbol){
+        ADMIN = msg.sender;
+    }
     
-    
-    function bytGeneratePropertyHash(PropertyDetails memory propertyDetails) private pure returns (bytes32) {
-        return keccak256(abi.encode(propertyDetails.m_objProperty.m_strPropertyId,
-                                    propertyDetails.m_objProperty.m_strAddress,
-                                    propertyDetails.m_objProperty.m_objDateOfPosting,
+    function bytGeneratePropertyHashByObject(PropertyDetails memory propertyDetails) private pure returns (bytes32) {
+        return keccak256(abi.encode(propertyDetails.m_objProperty.m_strAddress,
                                     propertyDetails.m_ePropertytype));
     }
     
+    function bytGeneratePropertyHash(string memory addr, int propertyType) private pure returns (bytes32) {
+        return keccak256(abi.encode(addr, propertyType));
+    }
+    
     function 
-    vAddProperty(string memory propertyId, string memory addr, string memory dateOfPosting, bool isActive, address tenant, int propertyType)
-        modPropertyShouldNotExist(propertyId) public {
-        
+    vAddProperty(string memory propertyId, string memory addr, string memory dateOfPosting, bool isActive, int propertyType)
+        modPropertyShouldNotExist(propertyId) modHashShouldBeUnique(addr, propertyType) public{
+        uint256 index = gc_iTokenCounter.current();
         address[] memory tenantList;
-        LibProperty.Property memory tempProperty = LibProperty.Property({m_strPropertyId:propertyId, 
+        LibProperty.Property memory tempProperty = LibProperty.Property({m_iPropertyId:propertyId, 
                                                                         m_strAddress:addr, 
                                                                         m_objDateOfPosting:dateOfPosting, 
                                                                         m_bIsActive:isActive,
-                                                                        m_addrOwner:msg.sender,
                                                                         m_arrTenantList:tenantList
         });
+        
         PropertyDetails memory propertyDetails = PropertyDetails(tempProperty, LibProperty.PropertyType(propertyType));
         gc_mapProperties[propertyId] = propertyDetails;
-        gc_mapProperties[propertyId].m_objProperty.m_arrTenantList.push(tenant);
-        gc_mapPropertyHashes[bytGeneratePropertyHash(propertyDetails)] = propertyId;
-        gc_iPropertyCount++;
-        gc_iActivePropertyCount++;
-        
-        emit evtAddedProperty(msg.sender, propertyId);
+        gc_mapPidToTokenId[propertyId] = index;
+        _mint(msg.sender, index);
+        bytes32 hash = bytGeneratePropertyHashByObject(propertyDetails);
+        gc_mapPropertyHashes[hash] = true;
+        gc_iTokenCounter.increment();
+    }
+    
+    function bTransferFrom(string memory propertyId, address from, address to) modAdminOwnerCanAccess() modFromShouldBeOwner(propertyId, from) public returns(bool){
+        safeTransferFrom(from, to, gc_mapPidToTokenId[propertyId]);
+        return true;
+    }
+    
+    function vOwnerOf(string memory propertyId) public returns(address) {
+        ownerOf(gc_mapPidToTokenId[propertyId]);
     }
     
     function objGetProperty(string memory propertyId) public view modPropertyShouldExist(propertyId) returns (PropertyDetails memory) {
         return gc_mapProperties[propertyId];
     }
     
-    function vAddReviews ( string memory propertyId, int rating, string memory comment)
+    function objGetNFTToken(string memory propertyId) public view modPropertyShouldExist(propertyId) returns (uint256) {
+        return gc_mapPidToTokenId[propertyId];
+    }
+    
+    function vAddReviews( string memory propertyId, int rating, string memory comment)
     public  modPropertyShouldExist(propertyId) modOnlyTenantCanAccess(propertyId) returns (bool) {
         if(!LibCommon.bIsValidRating(rating)){
             return false;
@@ -123,21 +161,9 @@ contract TrustedProperty {
         return true;
     }
     
-    function vAddMaintenenceDocuments (string memory propertyId, string memory desc, bytes memory hash)
+    function vAddMaintenenceDocuments(string memory propertyId, string memory desc, bytes memory hash)
     public  modPropertyShouldExist(propertyId) modOnlyOwnerCanAccess(propertyId) returns (bool) {
         gc_mapMaintenenceDocuments[propertyId].push(LibCommon.Document(msg.sender, desc, hash));
-        return true;
-    }
-
-    function bDeactivateProperty(string memory propertyId) public modPropertyShouldBeActive(propertyId) modOnlyOwnerCanAccess(propertyId) returns (bool) {
-        gc_mapProperties[propertyId].m_objProperty.m_bIsActive = false;
-        gc_iActivePropertyCount--;
-        return true;
-    }
-
-    function bActivateProperty(string memory propertyId) public modPropertyShouldExist(propertyId) modPropertyShouldNotBeActive(propertyId) modOnlyOwnerCanAccess(propertyId) returns (bool) {
-        gc_mapProperties[propertyId].m_objProperty.m_bIsActive = true;
-        gc_iActivePropertyCount++;
         return true;
     }
 }
