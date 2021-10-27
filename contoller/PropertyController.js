@@ -120,7 +120,7 @@ router.get('/getContractDetails/:contractId', async function (req, res) {
         res.send({ "status": "SUCCESS" , message: "Got Contract Details Successfully", data});
     })
     .catch((err) => {
-        res.status(500).send({ status: "Failed",  message: "Contract Details fetching error", error: err });
+        res.status(404).send({ status: "Not Found",  message: "Contract Details not found", error: err });
     });
 })
 

@@ -4,7 +4,7 @@ class RentalRequestService {
     constructor() {
     }
 
-    async updateRentalRequest(rentalRequestId, askedRent, askedSecurity, userId, publicKey, lms) {
+    async updateRentalRequest(rentalRequestId, userId, publicKey, lms) {
         return new Promise(async (resolve, reject) => {
             var rentalRequestModelInst = new RentalRequestModel();
             var propertyModelInst = new PropertyModel();
@@ -15,10 +15,13 @@ class RentalRequestService {
             rentalRequest = rentalRequest[0];
             let property = await propertyModelInst.findProperty({ propertyId: rentalRequest.propertyId });
 
+            if(property.length <= 0){
+                return reject("Property nt found");
+            }
             if (rentalRequest.tenantAddress && rentalRequest.duration) {
-                // await lms.initializeRentContract(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), { from: publicKey })
-                await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId,rentAmount: askedRent, securityDeposit:askedSecurity })    
-                .then(async (hash) => {
+                await lms.vInitRentAgreement(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), rentalRequest.rentAmount, rentalRequest.securityDeposit, { from: publicKey })
+                    .then(async (hash) => {
+                        await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId })
                         // await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId });
                         await rentalRequestModelInst.updateRentalRequest(rentalRequestId, { requestApprovalDone: true, ownerAddress: publicKey });
                         return resolve(hash);
@@ -32,6 +35,23 @@ class RentalRequestService {
                     })
             } else {
                 return reject("Invalid request");
+            }
+        })
+    }
+
+    async vBurnRentAgreement(contractId, lms, address){
+        return new Promise(async (resolve, reject) => {
+            if (contractId) {
+                lms.vBurnRentAgreement(contractId, { from: address })
+                    .then(async (data) => {
+                        resolve(data);
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return reject(err)
+                    })
+            } else {
+                return reject("Wrong input")
             }
         })
     }

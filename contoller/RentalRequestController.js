@@ -23,7 +23,7 @@ router.patch('/:rentalRequestId',async function (req, res) {
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
     const lms = await LMS.deployed();
-    return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId,req.body.askedRent, req.body.askedSecurity, req.userId,  req.publicKey, lms)
+    return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId, req.userId,  req.publicKey, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Rental request Approved successfully"});
         })
@@ -45,6 +45,19 @@ router.post('/', function (req, res) {
         })
         .catch((err) => {
             res.status(400).send({ status: "Failed" , message: "Rental request couldn't be created successfully", error: err});
+        });
+});
+
+router.post('/burnRentAgreement/:contractId',async function (req, res) {
+    var rentalRequestServiceInst = new RentalRequestService();
+    req.userId = req.user.userId;
+    const lms = await LMS.deployed();
+    return rentalRequestServiceInst.vBurnRentAgreement(req.params.contractId,lms, req.user.publicKey)
+        .then((data) => {
+            res.send({ "status": "SUCCESS", message: "Rental request burned successfully",data});
+        })
+        .catch((err) => {
+            res.status(400).send({ status: "Failed" , message: "Rental request couldn't be burnt successfully", error: err});
         });
 });
 

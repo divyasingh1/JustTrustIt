@@ -94,41 +94,37 @@ class PropertyService {
     }
 
     vOwnerOf(propertyId, address, lms) {
-        return new Promise(async (resolve, reject) => {
-            if (propertyId) {
-                lms.vOwnerOf(propertyId, { from: address })
-                    .then(async (data) => {
-                        return resolve(data)
-                    })
-                    .catch(err => {
-                        console.log(err)
-                        return reject(err)
-                    })
-            } else {
-                return reject("wrong input")
-            }
-        })
+        // return new Promise(async (resolve, reject) => {
+        //     if (propertyId) {
+        //         lms.vOwnerOf(propertyId, { from: address })
+        //             .then(async (data) => {
+        //                 return resolve(data)
+        //             })
+        //             .catch(err => {
+        //                 console.log(err)
+        //                 return reject(err)
+        //             })
+        //     } else {
+        //         return reject("wrong input")
+        //     }
+        // })
     }
 
     async getContractDetails(userId, contractId, address, lms) {
         return new Promise(async (resolve, reject) => {
             if (contractId) {
-                lms.getContractDetails(contractId, { from: address })
+                lms.objGetRentAgreement(contractId, { from: address })
                     .then(async (data) => {
                         let res = {
                             doesExist: true,
-                            property_id: data[1],
-                            status: data[2],
-                            owner: data[3],
-                            tenant: data[4],
+                            ownerAddress: data[1],
+                            tenantAddress: data[2],
+                            contractId: data[3],
+                            rentAmount: data[4],
                             security_deposit: data[5],
-                            rent_amount: data[6],
-                            duration: data[7],
-                            remaining_payments: data[8],
-                            security_deposit_balance: data[9],
-                            start_date: data[10],
-                            duration_extension_request: data[12],
-                            createdAt: data[13]
+                            duration_in_months: data[6],
+                            move_in_date: data[7],
+                            date_of_creation: data[8]
                         }
                         return resolve(res)
                     })
