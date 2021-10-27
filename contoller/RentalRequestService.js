@@ -20,7 +20,7 @@ class RentalRequestService {
                 await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId,rentAmount: askedRent, securityDeposit:askedSecurity })    
                 .then(async (hash) => {
                         // await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId });
-                        await rentalRequestModelInst.updateRentalRequest(rentalRequestId, { requestApprovalDone: true });
+                        await rentalRequestModelInst.updateRentalRequest(rentalRequestId, { requestApprovalDone: true, ownerAddress: publicKey });
                         return resolve(hash);
                     })
                     .then((hash) => {

@@ -47,30 +47,37 @@ class PropertyService {
         })
     }
 
-    async payrent(fromAddress, toAddress,contractId, lms) {
+    async payrent(NFTTokenId, contractId, lms) {
         let rentModelInst = new RentModel();
         return new Promise(async (resolve, reject) => {
-            if (fromAddress && toAddress ) {
+            if (NFTTokenId) {
                 var rentalRequestModelInst = new RentalRequestModel();
                 let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
                 if (rentalRequest.length <= 0) {
                     return reject("Rental request not found or is not approved");
                 }
-                let rent = await rentModelInst.findRent({contractId})
+                let rent = await rentModelInst.findRent({ contractId })
                 if (rent.length > 0) {
                     return reject("Rent already paid for first month");
                 }
                 var propertyModelInst = new PropertyModel();
                 let property = await propertyModelInst.findProperty({ propertyId: rentalRequest[0].propertyId });
 
-                if(property.length <= 0){
+                if (property.length <= 0) {
                     return reject("Property not found for this contract");
                 }
 
-                lms.bTransferFrom(rentalRequest[0].propertyId, fromAddress, toAddress, { from: '0xF9314B93D914D223d49e9f86075fd72d88D22019' })
+                lms.ADMIN()
+                    .then(async (data) => {
+                        console.log(data, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress)
+                        return lms.approve('0x04F93DEB7Ee4fCedA622AAdEE7C79C3fa8b78723', NFTTokenId, { from: rentalRequest[0].ownerAddress })
+                    })
+                    .then(() => {
+                        lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: '0x04F93DEB7Ee4fCedA622AAdEE7C79C3fa8b78723' })
+                    })
                     .then(async (data) => {
                         let rentDetails = {
-                            rentAmount:property[0].rentAmount,
+                            rentAmount: property[0].rentAmount,
                             contractId
                         }
                         await rentModelInst.createRent(rentDetails);
@@ -86,7 +93,7 @@ class PropertyService {
         })
     }
 
-    vOwnerOf(propertyId, address, lms){
+    vOwnerOf(propertyId, address, lms) {
         return new Promise(async (resolve, reject) => {
             if (propertyId) {
                 lms.vOwnerOf(propertyId, { from: address })
