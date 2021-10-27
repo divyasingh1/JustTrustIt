@@ -15,8 +15,16 @@ var PropertySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    NFTTokenId: {
+        type: Number,
+        required: true
+    },
     propertyName:{
         type: String
+    },
+    transactionHash:{
+        type: String,
+        required: true
     },
     initialAvailableDate:{
         type: String

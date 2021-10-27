@@ -1,11 +1,10 @@
 const PropertyModel = require('./PropertyModel');
 const RentalRequestModel = require('./RentalRequestModel');
-const { lms } = require("../lms")
 class RentalRequestService {
     constructor() {
     }
 
-    async updateRentalRequest(rentalRequestId, userId, publicKey, lms) {
+    async updateRentalRequest(rentalRequestId, askedRent, askedSecurity, userId, publicKey, lms) {
         return new Promise(async (resolve, reject) => {
             var rentalRequestModelInst = new RentalRequestModel();
             var propertyModelInst = new PropertyModel();
@@ -17,9 +16,10 @@ class RentalRequestService {
             let property = await propertyModelInst.findProperty({ propertyId: rentalRequest.propertyId });
 
             if (rentalRequest.tenantAddress && rentalRequest.duration) {
-                await lms.initializeRentContract(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), { from: publicKey })
-                    .then(async (hash) => {
-                        await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId });
+                // await lms.initializeRentContract(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), { from: publicKey })
+                await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId,rentAmount: askedRent, securityDeposit:askedSecurity })    
+                .then(async (hash) => {
+                        // await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId });
                         await rentalRequestModelInst.updateRentalRequest(rentalRequestId, { requestApprovalDone: true });
                         return resolve(hash);
                     })

@@ -8,7 +8,7 @@ router.use(bodyParser.json());
 
 const Web3 = require('web3');
 const contract = require('truffle-contract');
-const artifacts = require('../build/TrustedPropertiesBasicRentContract.json');
+const artifacts = require('../build/TrustedProperty.json');
 if (typeof web3 !== 'undefined') {
     var web3 = new Web3(web3.currentProvider)
   } else {
@@ -26,19 +26,6 @@ router.patch('/:propertyId', function (req, res) {
         })
         .catch((err) => {
             res.status(400).send({ status: "Failed" ,  message: "Property Couldn't be updated successfully", error: err});
-        });
-});
-
-//working
-router.post('/setRent/:propertyId', async function (req, res) {
-    var propertyServiceInst = new PropertyService();
-    const lms = await LMS.deployed();
-    return propertyServiceInst.setRent(req.params.propertyId, req.body, req.user.publicKey, lms)
-        .then((data) => {
-            res.send({ "status": "SUCCESS",  message: "Rent set successfully" });
-        })
-        .catch((err) => {
-            res.status(400).send({ status: "Failed" ,  message: "Rent Couldn't be set successfully", error: err});
         });
 });
 
@@ -60,11 +47,10 @@ router.post('/changeStatus/:status/:propertyId', async function (req, res) {
 //not working
  router.post('/payrent/:contractId', async function (req, res) {
         var propertyServiceInst = new PropertyService();
-        req.userId = req.user.userId;
 
         let { contractId } = req.params;
         const lms = await LMS.deployed();
-        return propertyServiceInst.payrent(req.userId, contractId, lms)
+        return propertyServiceInst.payrent(req.body.from, req.user.publicKey, contractId, lms, req.user.publicKey)
         .then((data) => {
             res.send({ "status": "SUCCESS" , message: "Rent paid Successfully"});
         })
@@ -73,6 +59,22 @@ router.post('/changeStatus/:status/:propertyId', async function (req, res) {
         });
 
     });
+
+
+router.get('/getNFTOwner/:propertyId', async function (req, res) {
+    var propertyServiceInst = new PropertyService();
+    req.userId = req.user.userId;
+
+    let { propertyId} = req.params;
+    const lms = await LMS.deployed();
+    return propertyServiceInst.vOwnerOf( propertyId, req.user.publicKey, lms)
+    .then((data) => {
+        res.send({ "status": "SUCCESS" , message: "Got Contract Details Successfully", data});
+    })
+    .catch((err) => {
+        res.status(500).send({ status: "Failed",  message: "Contract Details fetching error", error: err });
+    });
+})
 
     //working
 router.post('/', async function (req, res) {

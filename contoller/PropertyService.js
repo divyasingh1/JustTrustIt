@@ -1,5 +1,6 @@
 var PropertyModel = require('./PropertyModel');
 const RentalRequestModel = require('./RentalRequestModel');
+const RentModel = require('./RentModel');
 const { v4: uuidv4 } = require('uuid');
 
 class PropertyService {
@@ -46,19 +47,33 @@ class PropertyService {
         })
     }
 
-    async payrent(userId, contractId, lms) {
+    async payrent(fromAddress, toAddress,contractId, lms) {
+        let rentModelInst = new RentModel();
         return new Promise(async (resolve, reject) => {
-            if (userId && contractId) {
+            if (fromAddress && toAddress ) {
                 var rentalRequestModelInst = new RentalRequestModel();
                 let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
                 if (rentalRequest.length <= 0) {
-                    return Promise.reject("Rental request not found or is not approved");
+                    return reject("Rental request not found or is not approved");
+                }
+                let rent = await rentModelInst.findRent({contractId})
+                if (rent.length > 0) {
+                    return reject("Rent already paid for first month");
                 }
                 var propertyModelInst = new PropertyModel();
                 let property = await propertyModelInst.findProperty({ propertyId: rentalRequest[0].propertyId });
 
-                lms.payRent(contractId, { from: rentalRequest[0].tenantAddress, value: property[0].rentAmount })
+                if(property.length <= 0){
+                    return reject("Property not found for this contract");
+                }
+
+                lms.bTransferFrom(rentalRequest[0].propertyId, fromAddress, toAddress, { from: '0xF9314B93D914D223d49e9f86075fd72d88D22019' })
                     .then(async (data) => {
+                        let rentDetails = {
+                            rentAmount:property[0].rentAmount,
+                            contractId
+                        }
+                        await rentModelInst.createRent(rentDetails);
                         return resolve(data);
                     })
                     .catch(err => {
@@ -67,6 +82,23 @@ class PropertyService {
                     })
             } else {
                 return reject("wrong input");
+            }
+        })
+    }
+
+    vOwnerOf(propertyId, address, lms){
+        return new Promise(async (resolve, reject) => {
+            if (propertyId) {
+                lms.vOwnerOf(propertyId, { from: address })
+                    .then(async (data) => {
+                        return resolve(data)
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return reject(err)
+                    })
+            } else {
+                return reject("wrong input")
             }
         })
     }
@@ -107,18 +139,20 @@ class PropertyService {
         details.userId = userId;
         details.propertyId = uuidv4();
         let PropertyType = {
-            "House": "0",                         //  0 House
-            "ApartmentAndUnit": "1",              //  1 Apartment and unit
-            "Townhouse": "2",                     //  2 Townhouse
-            "Villa": "3",                         //  3 Villa
-            "BlockOfUnits": "4",                  //  4 Block of units (?)
-            "RetirementLiving": "5"               //  5 Retirement living
+            "House": 0,                         //  0 House
+            "ApartmentAndUnit": 1,              //  1 Apartment and unit
+            "Townhouse": 2,                     //  2 Townhouse
+            "Villa": 3,                         //  3 Villa
+            "BlockOfUnits": 4,                  //  4 Block of units (?)
+            "RetirementLiving": 5              //  5 Retirement living
         }
 
         return new Promise(async (resolve, reject) => {
             if (details) {
-                lms.addProperty(details.propertyId, parseInt(PropertyType[details.propertyType]), details.unitNumber, details.pincode, details.location, details.rooms, details.bathrooms, details.parking, details.initialAvailableDate, { from: address })
-                    .then(async (data) => {
+                lms.vAddProperty(details.propertyId, details.location, details.dateOfPosting, true, PropertyType[details.propertyType], { from: address })
+                    .then(async (data, hash) => {
+                        console.log(data.tx)
+                        details.transactionHash = data.tx;
                         return data;
                     })
                     .catch(err => {
@@ -126,13 +160,13 @@ class PropertyService {
                         return reject(err)
                     })
                     .then((data) => {
+                        return lms.objGetNFTToken(details.propertyId, { from: address })
+                    }).then((data) => {
+                        console.log(data.toNumber())
                         var propertyModelInst = new PropertyModel();
-                        details.hash = data;
                         details._id = uuidv4();
+                        details.NFTTokenId = data.toNumber();
                         return resolve(propertyModelInst.createProperty(details));
-                    })
-                    .then(()=>{
-                        return this.setRent(details.propertyId, details, address, lms)
                     })
                     .catch(err => {
                         console.log("error while creating property in db", err)

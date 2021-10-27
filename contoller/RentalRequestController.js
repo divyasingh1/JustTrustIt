@@ -8,7 +8,7 @@ router.use(bodyParser.json());
 
 const Web3 = require('web3');
 const contract = require('truffle-contract');
-const artifacts = require('../build/TrustedPropertiesBasicRentContract.json');
+const artifacts = require('../build/TrustedProperty.json');
 if (typeof web3 !== 'undefined') {
     var web3 = new Web3(web3.currentProvider)
   } else {
@@ -23,7 +23,7 @@ router.patch('/:rentalRequestId',async function (req, res) {
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
     const lms = await LMS.deployed();
-    return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId, req.userId,  req.publicKey, lms)
+    return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId,req.body.askedRent, req.body.askedSecurity, req.userId,  req.publicKey, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Rental request Approved successfully"});
         })
