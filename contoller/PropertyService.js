@@ -152,7 +152,7 @@ class PropertyService {
 
         return new Promise(async (resolve, reject) => {
             if (details) {
-                lms.vAddProperty(details.propertyId, details.location, details.dateOfPosting, true, PropertyType[details.propertyType], { from: address })
+                lms.vAddProperty(details.propertyId, details.location, details.dateOfPosting.toString(), true, PropertyType[details.propertyType], { from: address })
                     .then(async (data, hash) => {
                         console.log(data.tx)
                         details.transactionHash = data.tx;

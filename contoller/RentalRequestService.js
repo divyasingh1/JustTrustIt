@@ -18,6 +18,7 @@ class RentalRequestService {
             if(property.length <= 0){
                 return reject("Property nt found");
             }
+           
             if (rentalRequest.tenantAddress && rentalRequest.duration) {
                 await lms.vInitRentAgreement(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), rentalRequest.rentAmount, rentalRequest.securityDeposit, { from: publicKey })
                     .then(async (hash) => {
@@ -72,6 +73,13 @@ class RentalRequestService {
                 let contractId = Math.floor(Math.random() * 10000);
                 data.contractId = contractId;
                 data.tenantAddress = publicKey;
+                if(!data.rentAmount){
+                    data.rentAmount = property[0].rentAmount;
+                }
+                if(!data.securityDeposit){
+                    data.securityDeposit = property[0].securityDeposit;
+                }
+                console.log("data", data)
                 return rentalRequestModelInst.createRentalRequest(tenantUserId, data);
             } else {
                 return Promise.reject("Property Not found")
