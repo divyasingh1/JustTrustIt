@@ -153,6 +153,7 @@ class PropertyService {
 
         return new Promise(async (resolve, reject) => {
             if (details) {
+                details.dateOfPosting = new Date();
                 lms.vAddProperty(details.propertyId, details.location, details.dateOfPosting.toString(), true, PropertyType[details.propertyType], { from: address })
                     .then(async (data, hash) => {
                         console.log(data.tx)
