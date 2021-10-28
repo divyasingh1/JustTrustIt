@@ -47,15 +47,17 @@ class PropertyService {
         })
     }
 
-    async payrent(NFTTokenId, contractId, lms) {
+    async payrent(contractId, lms) {
         let rentModelInst = new RentModel();
         return new Promise(async (resolve, reject) => {
-            if (NFTTokenId) {
+            if (contractId) {
                 var rentalRequestModelInst = new RentalRequestModel();
                 let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
+
                 if (rentalRequest.length <= 0) {
                     return reject("Rental request not found or is not approved");
                 }
+
                 let rent = await rentModelInst.findRent({ contractId })
                 if (rent.length > 0) {
                     return reject("Rent already paid for first month");
@@ -66,14 +68,13 @@ class PropertyService {
                 if (property.length <= 0) {
                     return reject("Property not found for this contract");
                 }
-
                 lms.ADMIN()
                     .then(async (data) => {
                         console.log(data, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress)
-                        return lms.approve('0x04F93DEB7Ee4fCedA622AAdEE7C79C3fa8b78723', NFTTokenId, { from: rentalRequest[0].ownerAddress })
+                        return lms.approve('0xd097E81069d4D90E12175B1A10f4b451eD43C71D', property[0].NFTTokenId, { from: rentalRequest[0].ownerAddress })
                     })
                     .then(() => {
-                        lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: '0x04F93DEB7Ee4fCedA622AAdEE7C79C3fa8b78723' })
+                       return lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: '0xd097E81069d4D90E12175B1A10f4b451eD43C71D' })
                     })
                     .then(async (data) => {
                         let rentDetails = {

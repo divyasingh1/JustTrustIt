@@ -79,6 +79,7 @@ class RentalRequestService {
                 if(!data.securityDeposit){
                     data.securityDeposit = property[0].securityDeposit;
                 }
+                data.NFTTokenId = property[0].NFTTokenId;
                 console.log("data", data)
                 return rentalRequestModelInst.createRentalRequest(tenantUserId, data);
             } else {

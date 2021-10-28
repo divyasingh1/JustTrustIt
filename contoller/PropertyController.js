@@ -50,7 +50,7 @@ router.post('/changeStatus/:status/:propertyId', async function (req, res) {
 
         let { contractId } = req.params;
         const lms = await LMS.deployed();
-        return propertyServiceInst.payrent(req.body.NFTTokenId, contractId, lms)
+        return propertyServiceInst.payrent(contractId, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS" , message: "Rent paid Successfully"});
         })
