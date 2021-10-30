@@ -47,8 +47,52 @@ library LibCommon{
     }
     
     struct Document{
-        address m_addrOwnerName;
         string m_strDocumentDescription;
         bytes m_bytDocumentHash;
     }
+}
+
+library LibProperty {   
+    
+    enum PropertyType {
+        House,                         //  0 House
+        Apartment,                     //  1 Apartment
+        Townhouse,                     //  2 Townhouse
+        Villa,                         //  3 Villa
+        RetirementLiving               //  4 Retirement living
+    }
+
+    struct Property {
+        string m_strAddress; 
+        string m_objDateOfPosting;
+        bool m_bIsActive;
+        address[] m_arrTenantList;
+    }
+    
+    enum AgreementStatus {
+        Uninitialized,     // 0
+        DepositPending,    // 1
+        Active,            // 2
+        Completed,         // 3
+        Terminated         // 4
+    }
+    
+    struct RentContract {
+        AgreementStatus m_eAgreementStatus;
+        address m_addrOwner;                          
+        address m_addrTenant;
+        uint256 m_iContractId;
+        uint m_iRentAmount; 
+        uint m_iSecurityDeposit;
+        uint8 m_iDurationInMonths;   
+        string m_strMoveInDate;      
+        uint256 m_strDateOfCreation;
+        bool m_bExists;
+    }
+    
+    struct PaymentRecipts{
+        string m_strSecurityDepositTxId;
+        string[] m_arrMonthlyRenttxIds;
+    }
+
 }

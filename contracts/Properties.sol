@@ -1,49 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import {LibCommon} from "./LibCommon.sol";
+import {LibCommon, LibProperty} from "./Libs.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-library LibProperty {   
-    
-    enum PropertyType {
-        House,                         //  0 House
-        Apartment,                     //  1 Apartment
-        Townhouse,                     //  2 Townhouse
-        Villa,                         //  3 Villa
-        RetirementLiving               //  4 Retirement living
-    }
-
-    struct Property {
-        string m_iPropertyId;
-        string m_strAddress; 
-        string m_objDateOfPosting;
-        bool m_bIsActive;
-        address[] m_arrTenantList;
-    }
-    
-    enum AgreementStatus {
-        Uninitialized,     // 0
-        DepositPending,    // 1
-        Active,            // 2
-        Completed,         // 3
-        Terminated         // 4
-    }
-    
-    struct RentContract {
-        AgreementStatus m_eAgreementStatus;
-        address m_addrOwner;                          
-        address m_addrTenant;
-        uint256 m_iContractId;
-        uint m_iRentAmount; 
-        uint m_iSecurityDeposit;
-        uint8 m_iDurationInMonths;   
-        string m_strMoveInDate;      
-        uint256 m_strDateOfCreation;
-    }
-
-}
 
 contract TrustedProperty is ERC721{
     
@@ -58,18 +19,13 @@ contract TrustedProperty is ERC721{
         LibProperty.PropertyType m_ePropertytype;
     }
     
-    struct PropertyToRentLink{
-        bool m_bExists;
-        string m_strPropertyId;
-    }
-    
     mapping(string => PropertyDetails) private gc_mapProperties;
     mapping(string => LibCommon.Review[]) private gc_mapReviews;
     mapping(string => LibCommon.Document[]) private gc_mapMaintenenceDocuments;
-    mapping (bytes32 => bool) private gc_mapPropertyHashes;
-    mapping (string => uint256) private gc_mapPidToTokenId;
+    mapping(string => bool) private gc_mapPropertyExists;
+    mapping(string => uint256) private gc_mapPidToTokenId;
     mapping(string => LibProperty.RentContract) private gc_mapContracts;
-    mapping(uint256 => PropertyToRentLink) private gc_mapContractsExists;
+    mapping(uint256 => LibProperty.PaymentReceipts) private gc_mapRentAgreementToReceipts;
     
     modifier modOnlyTenantCanAccess(string memory propertyId) {
         bool tenantFound = false;
@@ -85,8 +41,6 @@ contract TrustedProperty is ERC721{
         _;
     }
     
-    
-
     modifier modOnlyOwnerCanAccess(string memory propertyId) {
         require(ownerOf(gc_mapPidToTokenId[propertyId]) == msg.sender, "Not an Owner, Authorization failed.");
         _;
@@ -98,7 +52,7 @@ contract TrustedProperty is ERC721{
     }
 
     modifier modPropertyShouldExist(string memory propertyId) {
-        require(gc_mapPropertyHashes[bytGeneratePropertyHashByObject(gc_mapProperties[propertyId])], "Property does not exist");
+        require(gc_mapPropertyExists[propertyId], "Property does not exist");
         _;
     }
     
@@ -106,14 +60,9 @@ contract TrustedProperty is ERC721{
         require(ownerOf(gc_mapPidToTokenId[propertyId]) == from, "Property Does not belong to #From address");
         _;
     }
-    
-    modifier modHashShouldBeUnique(string memory addr, int propertyType) {
-        require(!gc_mapPropertyHashes[bytGeneratePropertyHash(addr, propertyType)], "Hash is not unique, Same Property exists with a different Token");
-        _;
-    }
 
     modifier modPropertyShouldNotExist(string memory propertyId) {
-        require(gc_mapPropertyHashes[bytGeneratePropertyHashByObject(gc_mapProperties[propertyId])] == false, "Property already exists");
+        require(!(gc_mapPropertyExists[propertyId]), "Property already exists");
         _;
     }
 
@@ -126,47 +75,33 @@ contract TrustedProperty is ERC721{
         require(!gc_mapProperties[propertyId].m_objProperty.m_bIsActive, "Property InActive");
         _;
     }
+
+    modifier modPropertyShouldNotBeRentedWithContracted(string memory propertyId) {
+        require(!(gc_mapContracts[propertyId].m_bExists), "Property is already rented under an existing contract");
+        _;
+    }
     
-    modifier modContractShouldExist(uint256 contractId) {
-        require(gc_mapContractsExists[contractId].m_bExists, "Contract Does Not Exist");
+    modifier modPropertyShouldBeRentedWithContracted(string memory propertyId) {
+        require(gc_mapContracts[propertyId].m_bExists, "Property is not rented under an existing contract");
         _;
     }
-
-    modifier modContractShouldNotExist(uint256 contractId) {
-        require(!(gc_mapContractsExists[contractId].m_bExists), "Contract Already Exists");
-        _;
-    }
-
     
     event evtAddedProperty(address ownerAddress, bytes32 hash, string propertyId);
-    event evtRemovedProperty(address ownerAddress, string propertyId);
     event evtContractAdded(uint256 contractId);
-    event evtSecurityDeposited(string contractId, uint amount, uint trxn_fee);
-    event evtRentPaid(string contractId, uint amount, uint trxn_fee);
+    event evtSecurityDeposited(uint256 contractId, uint amount, string trxnId);
+    event evtRentPaid(uint256 contractId, uint amount, string trxnId);
     event evtContractTerminated(uint256 contractId);
-    event evtDebug(bool val, bytes32 hash);
-    event evtDebugPD(string m_strAddress, string m_objDateOfPosting, LibProperty.PropertyType m_ePropertytype);
     
     constructor(string memory name, string memory symbol) public ERC721(name, symbol){
         ADMIN = msg.sender;
     }
     
-    function bytGeneratePropertyHashByObject(PropertyDetails memory propertyDetails) private pure returns (bytes32) {
-        return keccak256(abi.encode(propertyDetails.m_objProperty.m_strAddress,
-                                    propertyDetails.m_ePropertytype));
-    }
-    
-    function bytGeneratePropertyHash(string memory addr, int propertyType) private pure returns (bytes32) {
-        return keccak256(abi.encode(addr, propertyType));
-    }
-    
     function 
-    vAddProperty(string memory propertyId, string memory addr, string memory dateOfPosting, bool isActive, int propertyType)
-        modPropertyShouldNotExist(propertyId) modHashShouldBeUnique(addr, propertyType) public{
+    vAddProperty(string memory propertyId, string memory addr, string memory dateOfPosting, bool isActive, LibProperty.PropertyType propertyType)
+        modPropertyShouldNotExist(propertyId) public{
         uint256 index = gc_iTokenCounter.current();
         address[] memory tenantList;
-        LibProperty.Property memory tempProperty = LibProperty.Property({m_iPropertyId:propertyId, 
-                                                                        m_strAddress:addr, 
+        LibProperty.Property memory tempProperty = LibProperty.Property({m_strAddress:addr, 
                                                                         m_objDateOfPosting:dateOfPosting, 
                                                                         m_bIsActive:isActive,
                                                                         m_arrTenantList:tenantList
@@ -175,9 +110,9 @@ contract TrustedProperty is ERC721{
         PropertyDetails memory propertyDetails = PropertyDetails(tempProperty, LibProperty.PropertyType(propertyType));
         gc_mapProperties[propertyId] = propertyDetails;
         gc_mapPidToTokenId[propertyId] = index;
+        
         _mint(msg.sender, index);
-        bytes32 hash = bytGeneratePropertyHashByObject(propertyDetails);
-        gc_mapPropertyHashes[hash] = true;
+        gc_mapPropertyExists[propertyId] = true;
         gc_iTokenCounter.increment();
     }
     
@@ -205,16 +140,16 @@ contract TrustedProperty is ERC721{
     
     function vAddMaintenenceDocuments(string memory propertyId, string memory desc, bytes memory hash)
     public  modPropertyShouldExist(propertyId) modOnlyOwnerCanAccess(propertyId) returns (bool) {
-        gc_mapMaintenenceDocuments[propertyId].push(LibCommon.Document(msg.sender, desc, hash));
+        gc_mapMaintenenceDocuments[propertyId].push(LibCommon.Document(desc, hash));
         return true;
     }
     
-    function vInitRentAgreement(uint256 contractId, string memory propertyId, address tenant, uint8 duration, string memory startDate, uint rent, uint deposit)
-    public modOnlyOwnerCanAccess(propertyId) modContractShouldNotExist(contractId) {
+    function vInitRentAgreement(uint256 contractId, string memory propertyId, address tenant, uint8 duration, string memory startDate, uint rent, uint deposit,  string memory securityDepositTxId, string memory rentTxId)
+    public modOnlyOwnerCanAccess(propertyId) modPropertyShouldNotBeRentedWithContracted(propertyId) {
 
         require(rent > gc_iMintFee, "Rent must be more than the mint fee!");
         require(deposit > gc_iMintFee, "Security deposit must be more than the mint fee!");
-
+        
         gc_mapContracts[propertyId] = LibProperty.RentContract({
             m_iContractId: contractId,
             m_eAgreementStatus: LibProperty.AgreementStatus.DepositPending,
@@ -224,22 +159,37 @@ contract TrustedProperty is ERC721{
             m_iRentAmount: rent,
             m_iDurationInMonths: duration,
             m_strMoveInDate: startDate,
-            m_strDateOfCreation: block.timestamp
+            m_strDateOfCreation: block.timestamp,
+            m_bExists: true
         });
-        
-        gc_mapContractsExists[contractId].m_bExists = true;
-        gc_mapContractsExists[contractId].m_strPropertyId = propertyId;
+        gc_mapProperties[propertyId].m_objProperty.m_arrTenantList.push(tenant);
+        string[] memory rentTxIds;
+        LibProperty.PaymentReceipts memory tempReceipts = LibProperty.PaymentReceipts({m_strSecurityDepositTxId: securityDepositTxId,
+                                                                                   m_arrMonthlyRenttxIds: rentTxIds});
+        gc_mapRentAgreementToReceipts[contractId] = tempReceipts;
+        gc_mapRentAgreementToReceipts[contractId].m_arrMonthlyRenttxIds.push(rentTxId);
+        emit evtSecurityDeposited(contractId, deposit, securityDepositTxId);
+        emit evtRentPaid(contractId, rent, rentTxId);
         emit evtContractAdded(contractId);
     }
     
-    function objGetRentAgreement(uint256 contractId) public modContractShouldExist(contractId) view returns(LibProperty.RentContract memory){
-        return gc_mapContracts[gc_mapContractsExists[contractId].m_strPropertyId];
+    function objGetRentAgreement(string memory propertyId) public modPropertyShouldBeRentedWithContracted(propertyId) view returns(LibProperty.RentContract memory){
+        return gc_mapContracts[propertyId];
     }
     
-    function vBurnRentAgreement(uint256 contractId)
-    public modAdminOwnerCanAccess() modContractShouldExist(contractId) {
-        delete gc_mapContracts[gc_mapContractsExists[contractId].m_strPropertyId];
-        delete gc_mapContractsExists[contractId];
-        emit evtContractAdded(contractId);
+    function vAddRentTxId(string memory propertyId, string memory rentTxId) public modAdminOwnerCanAccess() modPropertyShouldBeRentedWithContracted(propertyId) {
+        gc_mapRentAgreementToReceipts[gc_mapContracts[propertyId].m_iContractId].m_arrMonthlyRenttxIds.push(rentTxId);
+        emit evtRentPaid(gc_mapContracts[propertyId].m_iContractId, gc_mapContracts[propertyId].m_iRentAmount, rentTxId);
+    }
+    
+    function objGetPaymentReceipts(string memory propertyId) public view modAdminOwnerCanAccess() returns(LibProperty.PaymentReceipts memory){
+        return gc_mapRentAgreementToReceipts[gc_mapContracts[propertyId].m_iContractId];
+    }
+    
+    function vBurnRentAgreement(string memory propertyId)
+    public modAdminOwnerCanAccess() modPropertyShouldBeRentedWithContracted(propertyId) {
+        uint contractId = gc_mapContracts[propertyId].m_iContractId;
+        delete gc_mapContracts[propertyId];
+        emit evtContractTerminated(contractId);
     }
 }
