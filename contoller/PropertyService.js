@@ -71,10 +71,10 @@ class PropertyService {
                 lms.ADMIN()
                     .then(async (data) => {
                         console.log(data, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress)
-                        return lms.approve('0xd097E81069d4D90E12175B1A10f4b451eD43C71D', property[0].NFTTokenId, { from: rentalRequest[0].ownerAddress })
+                        return lms.approve('0xfCB0f528E95EaBB3fC3667c923aB1F84CFE20C77', property[0].NFTTokenId, { from: rentalRequest[0].ownerAddress })
                     })
                     .then(() => {
-                       return lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: '0xd097E81069d4D90E12175B1A10f4b451eD43C71D' })
+                        return lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: '0xfCB0f528E95EaBB3fC3667c923aB1F84CFE20C77' })
                     })
                     .then(async (data) => {
                         let rentDetails = {
@@ -221,14 +221,24 @@ class PropertyService {
         })
     }
 
-    setRent(propertyId, details, address, lms) {
+    changeRent(propertyId, details, address) {
         var propertyModelInst = new PropertyModel();
         return new Promise(async (resolve, reject) => {
-            if (propertyId && details.securityDeposit && details.rentAmount && address) {
-                lms.setRent(propertyId, details.securityDeposit, details.rentAmount, { from: address })
+            if (propertyId && address && (details.rentAmount || details.securityDeposit)) {
+                let updateData = {};
+                if (details.rentAmount)
+                    updateData.rentAmount = details.rentAmount;
+                if (details.securityDeposit)
+                    updateData.securityDeposit = details.securityDeposit;
+
+                let property = await propertyModelInst.findProperty({propertyId,availability:true})
+                if(!property || property.length <=0){
+                    console.log("Property not found or property is already rented")
+                    return reject("Property not found or property is already rented")
+                }
+                return propertyModelInst.updateProperty(propertyId, updateData)
                     .then(async (data) => {
-                        await propertyModelInst.updateProperty(propertyId, { rentAmount: details.rentAmount, securityDeposit: details.securityDeposit });
-                        resolve(data);
+                       return resolve(data);
                     })
                     .catch(err => {
                         console.log(err)
