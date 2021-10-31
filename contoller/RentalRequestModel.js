@@ -57,8 +57,7 @@ class RequestModel {
 
     findPropertyJoin(filter){
         return new Promise(function (resolve, reject) {
-            
-            RentalRequest.aggregate([
+            RentalRequest.aggregate([ {$match:filter},
               {$lookup:{from:'properties', localField: 'propertyId', foreignField: 'propertyId',as: 'property'}}])
             .exec(function(err, res) {
                 if (err) {

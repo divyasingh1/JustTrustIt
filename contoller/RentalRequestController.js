@@ -109,7 +109,7 @@ router.get('/list', async function (req, res) {
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
 
-    return rentalRequestServiceInst.findPropertyJoin(req.publicKey)
+    return rentalRequestServiceInst.findPropertyJoin(req.userId)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Got rental requests are their properties", data });
         })

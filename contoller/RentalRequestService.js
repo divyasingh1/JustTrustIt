@@ -4,10 +4,10 @@ class RentalRequestService {
     constructor() {
     }
 
-    async findPropertyJoin(ownerAddress) {
-        let dbFilter = {ownerAddress};
+    async findPropertyJoin(userId) {
+        let dbFilter = {"ownerUserId": userId};
         var rentalRequestModelInst = new RentalRequestModel();
-        return rentalRequestModelInst.findPropertyJoin();
+        return rentalRequestModelInst.findPropertyJoin(dbFilter);
     }
 
     async updateRentalRequest(rentalRequestId, userId, publicKey, lms) {
