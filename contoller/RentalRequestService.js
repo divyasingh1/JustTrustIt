@@ -4,6 +4,12 @@ class RentalRequestService {
     constructor() {
     }
 
+    async findPropertyJoin(ownerAddress) {
+        let dbFilter = {ownerAddress};
+        var rentalRequestModelInst = new RentalRequestModel();
+        return rentalRequestModelInst.findPropertyJoin();
+    }
+
     async updateRentalRequest(rentalRequestId, userId, publicKey, lms) {
         return new Promise(async (resolve, reject) => {
             var rentalRequestModelInst = new RentalRequestModel();
@@ -15,10 +21,10 @@ class RentalRequestService {
             rentalRequest = rentalRequest[0];
             let property = await propertyModelInst.findProperty({ propertyId: rentalRequest.propertyId });
 
-            if(property.length <= 0){
+            if (property.length <= 0) {
                 return reject("Property nt found");
             }
-           
+
             if (rentalRequest.tenantAddress && rentalRequest.duration) {
                 await lms.vInitRentAgreement(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), rentalRequest.rentAmount, rentalRequest.securityDeposit, { from: publicKey })
                     .then(async (hash) => {
@@ -40,7 +46,7 @@ class RentalRequestService {
         })
     }
 
-    async vBurnRentAgreement(contractId, lms, address){
+    async vBurnRentAgreement(contractId, lms, address) {
         return new Promise(async (resolve, reject) => {
             if (contractId) {
                 lms.vBurnRentAgreement(contractId, { from: address })
@@ -73,10 +79,10 @@ class RentalRequestService {
                 let contractId = Math.floor(Math.random() * 10000);
                 data.contractId = contractId;
                 data.tenantAddress = publicKey;
-                if(!data.rentAmount){
+                if (!data.rentAmount) {
                     data.rentAmount = property[0].rentAmount;
                 }
-                if(!data.securityDeposit){
+                if (!data.securityDeposit) {
                     data.securityDeposit = property[0].securityDeposit;
                 }
                 data.NFTTokenId = property[0].NFTTokenId;
@@ -157,6 +163,9 @@ class RentalRequestService {
         }
         if (filter.ownerUserId) {
             dbFilter.ownerUserId = filter.ownerUserId;
+        }
+        if (filter.contractId) {
+            dbFilter.contractId = filter.contractId;
         }
 
         var rentalRequestModelInst = new RentalRequestModel();
