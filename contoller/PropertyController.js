@@ -44,6 +44,19 @@ router.post('/changeStatus/:status/:propertyId', async function (req, res) {
 });
 
 
+router.post('/changeRent/:propertyId', async function (req, res) {
+    console.log(">>>>>")
+    var propertyServiceInst = new PropertyService();
+    let { propertyId } = req.params;
+    return propertyServiceInst.changeRent(propertyId, req.body, req.user.publicKey)
+    .then((data) => {
+        res.send({ "status": "SUCCESS" , message: "Rent changes Successfully"});
+    })
+    .catch((err) => {
+        res.status(400).send({ status: "Failed",  message: "Rent change failed", error: err });
+    });
+
+});
 //not working
  router.post('/payrent/:contractId', async function (req, res) {
         var propertyServiceInst = new PropertyService();
