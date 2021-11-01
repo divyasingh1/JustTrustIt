@@ -62,6 +62,10 @@ var PropertySchema = new mongoose.Schema({
     },
     ownerAddress: {
         type: String
+    },
+    KYC:{
+        type: Boolean,
+        default: true
     }
 },
 {
