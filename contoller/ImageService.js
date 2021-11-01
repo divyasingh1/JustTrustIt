@@ -9,6 +9,7 @@ class ImageService {
 
 
     covertImageToBuffer(imageFile) {
+        console.log("imageFile", imageFile)
         return new Promise(async (resolve, reject) => {
             fs.readFile(imageFile, function (err, data) {
                 if (err) reject(err);
@@ -31,29 +32,18 @@ class ImageService {
 
     saveImage(propertyId, details) {
         details.imageId = uuidv4();
-        data.imageType = "png";
-        data.propertyId = propertyId;
+        details.propertyId = propertyId;
         return new Promise(async (resolve, reject) => {
             if (details) {
-                this.covertImageToBuffer([details.image])
-                    .then(async (data) => {
-                        var propertyModelInst = new PropertyModel();
-                        let property = await propertyModelInst.findProperty({ propertyId });
-                        if (!property || !property.length) {
-                            return reject("Property not found");
-                        }
-                        return data;
-                    })
-                    .then(async (data) => {
-                        let imageModelInst = new ImageModel();
-                        details.imageBuffer = data;
-                        details._id = uuidv4();
-                        return resolve(imageModelInst.saveImage(details));
-                    })
-                    .catch(err => {
-                        console.log(err)
-                        return reject(err)
-                    })
+
+                var propertyModelInst = new PropertyModel();
+                let property = await propertyModelInst.findProperty({ propertyId });
+                if (!property || !property.length) {
+                    return reject("Property not found");
+                }
+                let imageModelInst = new ImageModel();
+                details._id = uuidv4();
+                return resolve(imageModelInst.saveImage(details));
             } else {
                 return reject("wrong input")
             }

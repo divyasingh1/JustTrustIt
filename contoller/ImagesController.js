@@ -3,6 +3,9 @@ var router = express.Router();
 var bodyParser = require('body-parser');
 var ImageService = require('./ImageService');
 
+const multer  = require('multer')
+const upload = multer({ dest: 'uploads' })
+
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 
@@ -18,12 +21,13 @@ router.patch('/:imageId', function (req, res) {
         });
 });
 
+
+
     //working
-router.post('/', async function (req, res) {
+router.post('/:propertyId', upload.single('image'), async function (req, res) {
     var imageServiceInst = new ImageService();
-    req.userId = req.user.userId;
-    req.publicKey = req.user.publicKey;
-    return imageServiceInst.saveImage(req.body.propertyId, req.body, req.publicKey)
+    console.log(">>>>",req.file)
+    return imageServiceInst.saveImage(req.params.propertyId, req.file)
         .then((data) => {
             res.send({ "status": "SUCCESS" , message: "Image Saved Successfully", data});
         })
