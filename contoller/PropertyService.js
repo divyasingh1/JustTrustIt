@@ -71,10 +71,10 @@ class PropertyService {
                 lms.ADMIN()
                     .then(async (data) => {
                         console.log(data, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress)
-                        return lms.approve('0xfCB0f528E95EaBB3fC3667c923aB1F84CFE20C77', property[0].NFTTokenId, { from: rentalRequest[0].ownerAddress })
+                        return lms.approve(process.env.ADMIN_ADDRESS, property[0].NFTTokenId, { from: rentalRequest[0].ownerAddress })
                     })
                     .then(() => {
-                        return lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: '0xfCB0f528E95EaBB3fC3667c923aB1F84CFE20C77' })
+                        return lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: process.env.ADMIN_ADDRESS })
                     })
                     .then(async (data) => {
                         let rentDetails = {
