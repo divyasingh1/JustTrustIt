@@ -26,7 +26,6 @@ router.patch('/:imageId', function (req, res) {
     //working
 router.post('/:propertyId', upload.single('image'), async function (req, res) {
     var imageServiceInst = new ImageService();
-    console.log(">>>>",req.file)
     return imageServiceInst.saveImage(req.params.propertyId, req.file)
         .then((data) => {
             res.send({ "status": "SUCCESS" , message: "Image Saved Successfully", data});
@@ -38,10 +37,10 @@ router.post('/:propertyId', upload.single('image'), async function (req, res) {
 });
 
  
-router.get('/:imageId', async function (req, res) {
+router.get('/:propertyId', async function (req, res) {
     var imageServiceInst = new ImageService();
     req.userId = req.user.userId;
-    return imageServiceInst.getImage(req.params.imageId, req.user.publicKey)
+    return imageServiceInst.getImage(req.params.propertyId)
     .then((data) => {
         res.send({ "status": "SUCCESS" , message: "Got image Details Successfully", data});
     })

@@ -34,7 +34,7 @@ router.patch('/:propertyId', function (req, res) {
 router.post('/changeStatus/:status/:propertyId', async function (req, res) {
     var propertyServiceInst = new PropertyService();
     const lms = await LMS.deployed();
-    return propertyServiceInst.changeStatus(req.params.propertyId, req.user.publicKey, req.params.status, lms)
+    return propertyServiceInst.changeStatus(req.params.propertyId, req.params.status, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS",  message: "Property " + req.params.status+ "d" + " successfully" });
         })
@@ -148,5 +148,7 @@ router.post('/withdrawFunds', async function (req, res) {
             res.status(500).send({ status: "Failed" ,  message: "Error in withdraw funds", error: err});
         });
 });
+
+
 
 module.exports = router;

@@ -47,7 +47,7 @@ class PropertyService {
         })
     }
 
-    async payrent(contractId,txHash, lms) {
+    async payrent(contractId, txHash, lms) {
         let rentModelInst = new RentModel();
         return new Promise(async (resolve, reject) => {
             if (contractId) {
@@ -83,8 +83,8 @@ class PropertyService {
                             txHash
                         }
                         await rentModelInst.createRent(rentDetails);
-                       await rentalRequestModelInst.updateRentalRequest(rentalRequest[0].rentalRequestId, {rentAndSecurityPaid: true})
-                       return resolve(data);
+                        await rentalRequestModelInst.updateRentalRequest(rentalRequest[0].rentalRequestId, { rentAndSecurityPaid: true })
+                        return resolve(data);
                     })
                     .catch(err => {
                         console.log(err)
@@ -235,14 +235,14 @@ class PropertyService {
                 if (details.securityDeposit)
                     updateData.securityDeposit = details.securityDeposit;
 
-                let property = await propertyModelInst.findProperty({propertyId,availability:true})
-                if(!property || property.length <=0){
+                let property = await propertyModelInst.findProperty({ propertyId, availability: true })
+                if (!property || property.length <= 0) {
                     console.log("Property not found or property is already rented")
                     return reject("Property not found or property is already rented")
                 }
                 return propertyModelInst.updateProperty(propertyId, updateData)
                     .then(async (data) => {
-                       return resolve(data);
+                        return resolve(data);
                     })
                     .catch(err => {
                         console.log(err)
@@ -271,11 +271,12 @@ class PropertyService {
         })
     }
 
-    changeStatus(propertyId, address, status, lms) {
+    changeStatus(propertyId, status) {
+        var propertyModelInst = new PropertyModel();
         return new Promise(async (resolve, reject) => {
-            if (address && propertyId) {
+            if (propertyId) {
                 if (status === 'deactivate') {
-                    lms.deactivateProperty(propertyId, { from: address })
+                    return propertyModelInst.updateProperty(propertyId, { active: false })
                         .then(async (data) => {
                             resolve(data);
                         })
@@ -285,7 +286,7 @@ class PropertyService {
                         })
                 }
                 else if (status == 'activate') {
-                    lms.activateProperty(propertyId, { from: address })
+                    return propertyModelInst.updateProperty(propertyId, { active: true })
                         .then(async (data) => {
                             resolve(data);
                         })

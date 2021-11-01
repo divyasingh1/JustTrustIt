@@ -66,6 +66,10 @@ var PropertySchema = new mongoose.Schema({
     KYC:{
         type: Boolean,
         default: true
+    },
+    active: {
+        type:Boolean,
+        default: true
     }
 },
 {

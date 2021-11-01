@@ -30,7 +30,7 @@ class ImageService {
         });
     }
 
-    saveImage(propertyId, details) {
+    saveImage(propertyId, details={}) {
         details.imageId = uuidv4();
         details.propertyId = propertyId;
         return new Promise(async (resolve, reject) => {

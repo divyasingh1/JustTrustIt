@@ -50,7 +50,7 @@ contract TrustedProperty is ERC721{
     using Counters for Counters.Counter;
     Counters.Counter private gc_iTokenCounter;
     
-    uint public constant gc_iMintFee = 10;
+    // uint public constant gc_iMintFee = 10;
     address public ADMIN;
     
     struct PropertyDetails{
@@ -212,8 +212,8 @@ contract TrustedProperty is ERC721{
     function vInitRentAgreement(uint256 contractId, string memory propertyId, address tenant, uint8 duration, string memory startDate, uint rent, uint deposit)
     public modOnlyOwnerCanAccess(propertyId) modContractShouldNotExist(contractId) {
 
-        require(rent > gc_iMintFee, "Rent must be more than the mint fee!");
-        require(deposit > gc_iMintFee, "Security deposit must be more than the mint fee!");
+        // require(rent > gc_iMintFee, "Rent must be more than the mint fee!");
+        // require(deposit > gc_iMintFee, "Security deposit must be more than the mint fee!");
 
         gc_mapContracts[propertyId] = LibProperty.RentContract({
             m_iContractId: contractId,
