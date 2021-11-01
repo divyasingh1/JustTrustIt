@@ -11,6 +11,9 @@ var RentSchema = new mongoose.Schema({
     contractId:{
         type: String,
         require: true
+    },
+    txHash:{
+        type: String
     }
 },
 {

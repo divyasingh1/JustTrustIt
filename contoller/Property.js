@@ -59,6 +59,9 @@ var PropertySchema = new mongoose.Schema({
     availability: {
         type: Boolean,
         default: true
+    },
+    ownerAddress: {
+        type: String
     }
 },
 {

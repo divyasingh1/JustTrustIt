@@ -45,7 +45,6 @@ router.post('/changeStatus/:status/:propertyId', async function (req, res) {
 
 
 router.post('/changeRent/:propertyId', async function (req, res) {
-    console.log(">>>>>")
     var propertyServiceInst = new PropertyService();
     let { propertyId } = req.params;
     return propertyServiceInst.changeRent(propertyId, req.body, req.user.publicKey)
@@ -57,13 +56,13 @@ router.post('/changeRent/:propertyId', async function (req, res) {
     });
 
 });
-//not working
+// working
  router.post('/payrent/:contractId', async function (req, res) {
         var propertyServiceInst = new PropertyService();
 
         let { contractId } = req.params;
         const lms = await LMS.deployed();
-        return propertyServiceInst.payrent(contractId, lms)
+        return propertyServiceInst.payrent(contractId,req.body.txHash, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS" , message: "Rent paid Successfully"});
         })

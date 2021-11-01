@@ -47,7 +47,7 @@ class PropertyService {
         })
     }
 
-    async payrent(contractId, lms) {
+    async payrent(contractId,txHash, lms) {
         let rentModelInst = new RentModel();
         return new Promise(async (resolve, reject) => {
             if (contractId) {
@@ -79,10 +79,12 @@ class PropertyService {
                     .then(async (data) => {
                         let rentDetails = {
                             rentAmount: property[0].rentAmount,
-                            contractId
+                            contractId,
+                            txHash
                         }
                         await rentModelInst.createRent(rentDetails);
-                        return resolve(data);
+                       await rentalRequestModelInst.updateRentalRequest(rentalRequest[0].rentalRequestId, {rentAndSecurityPaid: true})
+                       return resolve(data);
                     })
                     .catch(err => {
                         console.log(err)
@@ -112,6 +114,7 @@ class PropertyService {
     }
 
     async getContractDetails(userId, contractId, address, lms) {
+        console.log(contractId, "contractId")
         return new Promise(async (resolve, reject) => {
             if (contractId) {
                 lms.objGetRentAgreement(contractId, { from: address })
@@ -171,6 +174,7 @@ class PropertyService {
                         var propertyModelInst = new PropertyModel();
                         details._id = uuidv4();
                         details.NFTTokenId = data.toNumber();
+                        details.ownerAddress = address;
                         return resolve(propertyModelInst.createProperty(details));
                     })
                     .catch(err => {
