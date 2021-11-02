@@ -70,6 +70,9 @@ var PropertySchema = new mongoose.Schema({
     active: {
         type:Boolean,
         default: true
+    },
+    rentToBePaid:{
+        type: String
     }
 },
 {

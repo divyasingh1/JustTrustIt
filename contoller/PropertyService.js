@@ -47,6 +47,44 @@ class PropertyService {
         })
     }
 
+    async payPerMonthRent(propertyId, txHash) {
+        let rentModelInst = new RentModel();
+        return new Promise(async (resolve, reject) => {
+            if (propertyId) {
+                var rentalRequestModelInst = new RentalRequestModel();
+                let rentalRequest = await rentalRequestModelInst.findRentalRequest({ propertyId, requestApprovalDone: true });
+
+                if (rentalRequest.length <= 0) {
+                    return reject("Rental request not found or is not approved");
+                }
+
+                let rent = await rentModelInst.findRent({ contractId: rentalRequest[0].contractId })
+                if (rent.length < 0) {
+                    return reject("Pay Rent for 1st month");
+                }
+                var propertyModelInst = new PropertyModel();
+                let property = await propertyModelInst.findProperty({ propertyId: rentalRequest[0].propertyId });
+
+                if (property.length <= 0) {
+                    return reject("Property not found for this contract");
+                }
+                let rentDetails = {
+                    rentAmount: rentalRequest[0].rentAmount,
+                    contractId: rentalRequest[0].contractId,
+                    txHash
+                }
+                await rentModelInst.createRent(rentDetails);
+                let lastRentDate = new Date(property[0].rentToBePaid);
+                var newDate = new Date(lastRentDate.setMonth(lastRentDate.getMonth() + 1));
+                await propertyModelInst.updateProperty(propertyId, { rentToBePaid: newDate });
+                return resolve();
+
+            } else {
+                return reject("wrong input");
+            }
+        })
+    }
+
     async payrent(contractId, txHash, lms) {
         let rentModelInst = new RentModel();
         return new Promise(async (resolve, reject) => {
@@ -78,12 +116,14 @@ class PropertyService {
                     })
                     .then(async (data) => {
                         let rentDetails = {
-                            rentAmount: property[0].rentAmount,
+                            rentAmount: rentalRequest[0].rentAmount,
                             contractId,
                             txHash
                         }
                         await rentModelInst.createRent(rentDetails);
-                        await rentalRequestModelInst.updateRentalRequest(rentalRequest[0].rentalRequestId, { rentAndSecurityPaid: true })
+                        await rentalRequestModelInst.updateRentalRequest(rentalRequest[0].rentalRequestId, { rentAndSecurityPaid: true });
+                        var newDate = new Date(new Date().setMonth(new Date().getMonth() + 1));
+                        await propertyModelInst.updateProperty(property[0].propertyId, { rentToBePaid: newDate });
                         return resolve(data);
                     })
                     .catch(err => {
@@ -150,8 +190,7 @@ class PropertyService {
             "ApartmentAndUnit": 1,              //  1 Apartment and unit
             "Townhouse": 2,                     //  2 Townhouse
             "Villa": 3,                         //  3 Villa
-            "BlockOfUnits": 4,                  //  4 Block of units (?)
-            "RetirementLiving": 5              //  5 Retirement living
+            "RetirementLiving": 4            //  4 Retirement living
         }
 
         return new Promise(async (resolve, reject) => {

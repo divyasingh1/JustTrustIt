@@ -72,7 +72,20 @@ router.post('/changeRent/:propertyId', async function (req, res) {
 
     });
 
+    router.post('/payPerMonthRent/:propertyId', async function (req, res) {
+        var propertyServiceInst = new PropertyService();
+        let { propertyId } = req.params;
+        return propertyServiceInst.payPerMonthRent(propertyId,req.body.txHash)
+        .then((data) => {
+            res.send({ "status": "SUCCESS" , message: "Rent paid Successfully"});
+        })
+        .catch((err) => {
+            res.status(400).send({ status: "Failed",  message: "Rent payment failed", error: err });
+        });
 
+    });
+
+    
 router.get('/getNFTOwner/:propertyId', async function (req, res) {
     var propertyServiceInst = new PropertyService();
     req.userId = req.user.userId;
