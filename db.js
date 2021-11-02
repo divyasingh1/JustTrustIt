@@ -1,5 +1,6 @@
+require('dotenv/config')
+let url = process.env.DB_URL
 var mongoose = require('mongoose');
-var url = process.env.db || 'mongodb://localhost:27017/rentals';
 mongoose.connect(url, { useNewUrlParser: true });
 mongoose.connection.on('connected', ()=>{
     console.log('connected to db');

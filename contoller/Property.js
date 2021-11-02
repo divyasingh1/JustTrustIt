@@ -15,8 +15,16 @@ var PropertySchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    NFTTokenId: {
+        type: Number,
+        required: true
+    },
     propertyName:{
         type: String
+    },
+    transactionHash:{
+        type: String,
+        required: true
     },
     initialAvailableDate:{
         type: String
@@ -51,6 +59,20 @@ var PropertySchema = new mongoose.Schema({
     availability: {
         type: Boolean,
         default: true
+    },
+    ownerAddress: {
+        type: String
+    },
+    KYC:{
+        type: Boolean,
+        default: true
+    },
+    active: {
+        type:Boolean,
+        default: true
+    },
+    rentToBePaid:{
+        type: String
     }
 },
 {

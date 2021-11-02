@@ -9,7 +9,7 @@ router.use(bodyParser.json());
 
 const Web3 = require('web3');
 const contract = require('truffle-contract');
-const artifacts = require('../build/TrustedPropertiesBasicRentContract.json');
+const artifacts = require('../build/TrustedProperty.json');
 if (typeof web3 !== 'undefined') {
     var web3 = new Web3(web3.currentProvider)
   } else {

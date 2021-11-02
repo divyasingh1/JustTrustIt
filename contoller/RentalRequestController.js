@@ -8,7 +8,7 @@ router.use(bodyParser.json());
 
 const Web3 = require('web3');
 const contract = require('truffle-contract');
-const artifacts = require('../build/TrustedPropertiesBasicRentContract.json');
+const artifacts = require('../build/TrustedProperty.json');
 if (typeof web3 !== 'undefined') {
     var web3 = new Web3(web3.currentProvider)
   } else {
@@ -48,6 +48,19 @@ router.post('/', function (req, res) {
         });
 });
 
+router.post('/burnRentAgreement/:contractId',async function (req, res) {
+    var rentalRequestServiceInst = new RentalRequestService();
+    req.userId = req.user.userId;
+    const lms = await LMS.deployed();
+    return rentalRequestServiceInst.vBurnRentAgreement(req.params.contractId,lms, req.user.publicKey)
+        .then((data) => {
+            res.send({ "status": "SUCCESS", message: "Rental request burned successfully",data});
+        })
+        .catch((err) => {
+            res.status(400).send({ status: "Failed" , message: "Rental request couldn't be burnt successfully", error: err});
+        });
+});
+
 router.patch('/extendContractDurationRequest/:contractId',async function (req, res) {
     var rentalRequestServiceInst = new RentalRequestService();
     req.userId = req.user.userId;
@@ -77,19 +90,32 @@ router.patch('/extendContractDurationConfirm/:contractId',async function (req, r
         });
 });
 
-router.get('/getPendingFunds',async function (req, res) {
+router.get('/getPendingFunds', async function (req, res) {
     var rentalRequestServiceInst = new RentalRequestService();
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
     const lms = await LMS.deployed();
     return rentalRequestServiceInst.getPendingFunds(req.userId, req.user.publicKey, lms)
         .then((data) => {
-            res.send({ "status": "SUCCESS", message: "Got pending funds", data});
+            res.send({ "status": "SUCCESS", message: "Got pending funds", data });
         })
         .catch((err) => {
-            res.status(500).send({ status: "Failed" , message: "Get pending funds failed", error: err});
+            res.status(500).send({ status: "Failed", message: "Get pending funds failed", error: err });
         });
+})
+
+router.get('/list', async function (req, res) {
+    var rentalRequestServiceInst = new RentalRequestService();
+    req.userId = req.user.userId;
+    req.publicKey = req.user.publicKey;
+    return rentalRequestServiceInst.findPropertyJoin(req.userId)
+        .then((data) => {
+            res.send({ "status": "SUCCESS", message: "Got rental requests are their properties", data });
         })
+        .catch((err) => {
+            res.status(500).send({ status: "Failed", message: "FAILED", error: err });
+        });
+})
     
 
 module.exports = router;

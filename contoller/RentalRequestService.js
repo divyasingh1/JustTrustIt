@@ -1,8 +1,13 @@
 const PropertyModel = require('./PropertyModel');
 const RentalRequestModel = require('./RentalRequestModel');
-const { lms } = require("../lms")
 class RentalRequestService {
     constructor() {
+    }
+
+    async findPropertyJoin(userId) {
+        let dbFilter = {"ownerUserId": userId};
+        var rentalRequestModelInst = new RentalRequestModel();
+        return rentalRequestModelInst.findPropertyJoin();
     }
 
     async updateRentalRequest(rentalRequestId, userId, publicKey, lms) {
@@ -16,11 +21,16 @@ class RentalRequestService {
             rentalRequest = rentalRequest[0];
             let property = await propertyModelInst.findProperty({ propertyId: rentalRequest.propertyId });
 
+            if (property.length <= 0) {
+                return reject("Property nt found");
+            }
+
             if (rentalRequest.tenantAddress && rentalRequest.duration) {
-                await lms.initializeRentContract(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), { from: publicKey })
+                await lms.vInitRentAgreement(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), rentalRequest.rentAmount, rentalRequest.securityDeposit, { from: publicKey })
                     .then(async (hash) => {
-                        await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId });
-                        await rentalRequestModelInst.updateRentalRequest(rentalRequestId, { requestApprovalDone: true });
+                        await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId })
+                        // await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId });
+                        await rentalRequestModelInst.updateRentalRequest(rentalRequestId, { requestApprovalDone: true, ownerAddress: publicKey });
                         return resolve(hash);
                     })
                     .then((hash) => {
@@ -32,6 +42,23 @@ class RentalRequestService {
                     })
             } else {
                 return reject("Invalid request");
+            }
+        })
+    }
+
+    async vBurnRentAgreement(contractId, lms, address) {
+        return new Promise(async (resolve, reject) => {
+            if (contractId) {
+                lms.vBurnRentAgreement(contractId, { from: address })
+                    .then(async (data) => {
+                        resolve(data);
+                    })
+                    .catch(err => {
+                        console.log(err)
+                        return reject(err)
+                    })
+            } else {
+                return reject("Wrong input")
             }
         })
     }
@@ -52,6 +79,14 @@ class RentalRequestService {
                 let contractId = Math.floor(Math.random() * 10000);
                 data.contractId = contractId;
                 data.tenantAddress = publicKey;
+                if (!data.rentAmount) {
+                    data.rentAmount = property[0].rentAmount;
+                }
+                if (!data.securityDeposit) {
+                    data.securityDeposit = property[0].securityDeposit;
+                }
+                data.NFTTokenId = property[0].NFTTokenId;
+                console.log("data", data)
                 return rentalRequestModelInst.createRentalRequest(tenantUserId, data);
             } else {
                 return Promise.reject("Property Not found")
@@ -128,6 +163,9 @@ class RentalRequestService {
         }
         if (filter.ownerUserId) {
             dbFilter.ownerUserId = filter.ownerUserId;
+        }
+        if (filter.contractId) {
+            dbFilter.contractId = filter.contractId;
         }
 
         var rentalRequestModelInst = new RentalRequestModel();

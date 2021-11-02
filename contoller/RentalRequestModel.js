@@ -37,7 +37,6 @@ class RequestModel {
     }
 
     updateRentalRequest(rentalRequestId, data){
-        console.log(">>>>========>data", arguments)
         return new Promise ((resolve, reject)=>{
             RentalRequest.updateMany(
             {
@@ -54,6 +53,25 @@ class RequestModel {
                 }
             })
         })
+    }
+
+    findPropertyJoin(filter){
+        return new Promise(function (resolve, reject) {
+            RentalRequest.aggregate([ 
+              {$lookup:{from:'properties', localField: 'propertyId', foreignField: 'propertyId',as: 'property'}}])
+            .exec(function(err, res) {
+                if (err) {
+                    console.log("Error in finding property", err);
+                    return reject("Error in finding property");
+                }
+                console.log(res)
+                if (!res) {
+                    console.log("property not found");
+                    return reject("property not found");
+                }
+                return resolve(res)
+            });
+        });
     }
 }
 

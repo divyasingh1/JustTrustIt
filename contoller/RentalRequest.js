@@ -49,9 +49,13 @@ var RentalRequestSchema = new mongoose.Schema({
         type: String,
         require: true
     },
-    fromAddress:{
+    ownerAddress:{
         type: String,
         require: true
+    },
+    rentAndSecurityPaid : {
+        type: Boolean,
+        default: false
     }
 },
 {

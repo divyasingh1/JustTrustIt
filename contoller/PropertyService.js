@@ -1,5 +1,6 @@
 var PropertyModel = require('./PropertyModel');
 const RentalRequestModel = require('./RentalRequestModel');
+const RentModel = require('./RentModel');
 const { v4: uuidv4 } = require('uuid');
 
 class PropertyService {
@@ -46,19 +47,83 @@ class PropertyService {
         })
     }
 
-    async payrent(userId, contractId, lms) {
+    async payPerMonthRent(propertyId, txHash) {
+        let rentModelInst = new RentModel();
         return new Promise(async (resolve, reject) => {
-            if (userId && contractId) {
+            if (propertyId) {
                 var rentalRequestModelInst = new RentalRequestModel();
-                let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
+                let rentalRequest = await rentalRequestModelInst.findRentalRequest({ propertyId, requestApprovalDone: true });
+
                 if (rentalRequest.length <= 0) {
-                    return Promise.reject("Rental request not found or is not approved");
+                    return reject("Rental request not found or is not approved");
+                }
+
+                let rent = await rentModelInst.findRent({ contractId: rentalRequest[0].contractId })
+                if (rent.length < 0) {
+                    return reject("Pay Rent for 1st month");
                 }
                 var propertyModelInst = new PropertyModel();
                 let property = await propertyModelInst.findProperty({ propertyId: rentalRequest[0].propertyId });
 
-                lms.payRent(contractId, { from: rentalRequest[0].tenantAddress, value: property[0].rentAmount })
+                if (property.length <= 0) {
+                    return reject("Property not found for this contract");
+                }
+                let rentDetails = {
+                    rentAmount: rentalRequest[0].rentAmount,
+                    contractId: rentalRequest[0].contractId,
+                    txHash
+                }
+                await rentModelInst.createRent(rentDetails);
+                let lastRentDate = new Date(property[0].rentToBePaid);
+                var newDate = new Date(lastRentDate.setMonth(lastRentDate.getMonth() + 1));
+                await propertyModelInst.updateProperty(propertyId, { rentToBePaid: newDate });
+                return resolve();
+
+            } else {
+                return reject("wrong input");
+            }
+        })
+    }
+
+    async payrent(contractId, txHash, lms) {
+        let rentModelInst = new RentModel();
+        return new Promise(async (resolve, reject) => {
+            if (contractId) {
+                var rentalRequestModelInst = new RentalRequestModel();
+                let rentalRequest = await rentalRequestModelInst.findRentalRequest({ contractId, requestApprovalDone: true });
+
+                if (rentalRequest.length <= 0) {
+                    return reject("Rental request not found or is not approved");
+                }
+
+                let rent = await rentModelInst.findRent({ contractId })
+                if (rent.length > 0) {
+                    return reject("Rent already paid for first month");
+                }
+                var propertyModelInst = new PropertyModel();
+                let property = await propertyModelInst.findProperty({ propertyId: rentalRequest[0].propertyId });
+
+                if (property.length <= 0) {
+                    return reject("Property not found for this contract");
+                }
+                lms.ADMIN()
                     .then(async (data) => {
+                        console.log(data, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress)
+                        return lms.approve(process.env.ADMIN_ADDRESS, property[0].NFTTokenId, { from: rentalRequest[0].ownerAddress })
+                    })
+                    .then(() => {
+                        return lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: process.env.ADMIN_ADDRESS })
+                    })
+                    .then(async (data) => {
+                        let rentDetails = {
+                            rentAmount: rentalRequest[0].rentAmount,
+                            contractId,
+                            txHash
+                        }
+                        await rentModelInst.createRent(rentDetails);
+                        await rentalRequestModelInst.updateRentalRequest(rentalRequest[0].rentalRequestId, { rentAndSecurityPaid: true });
+                        var newDate = new Date(new Date().setMonth(new Date().getMonth() + 1));
+                        await propertyModelInst.updateProperty(property[0].propertyId, { rentToBePaid: newDate });
                         return resolve(data);
                     })
                     .catch(err => {
@@ -71,25 +136,39 @@ class PropertyService {
         })
     }
 
+    vOwnerOf(propertyId, address, lms) {
+        // return new Promise(async (resolve, reject) => {
+        //     if (propertyId) {
+        //         lms.vOwnerOf(propertyId, { from: address })
+        //             .then(async (data) => {
+        //                 return resolve(data)
+        //             })
+        //             .catch(err => {
+        //                 console.log(err)
+        //                 return reject(err)
+        //             })
+        //     } else {
+        //         return reject("wrong input")
+        //     }
+        // })
+    }
+
     async getContractDetails(userId, contractId, address, lms) {
+        console.log(contractId, "contractId")
         return new Promise(async (resolve, reject) => {
             if (contractId) {
-                lms.getContractDetails(contractId, { from: address })
+                lms.objGetRentAgreement(contractId, { from: address })
                     .then(async (data) => {
                         let res = {
                             doesExist: true,
-                            property_id: data[1],
-                            status: data[2],
-                            owner: data[3],
-                            tenant: data[4],
+                            ownerAddress: data[1],
+                            tenantAddress: data[2],
+                            contractId: data[3],
+                            rentAmount: data[4],
                             security_deposit: data[5],
-                            rent_amount: data[6],
-                            duration: data[7],
-                            remaining_payments: data[8],
-                            security_deposit_balance: data[9],
-                            start_date: data[10],
-                            duration_extension_request: data[12],
-                            createdAt: data[13]
+                            duration_in_months: data[6],
+                            move_in_date: data[7],
+                            date_of_creation: data[8]
                         }
                         return resolve(res)
                     })
@@ -107,18 +186,20 @@ class PropertyService {
         details.userId = userId;
         details.propertyId = uuidv4();
         let PropertyType = {
-            "House": "0",                         //  0 House
-            "ApartmentAndUnit": "1",              //  1 Apartment and unit
-            "Townhouse": "2",                     //  2 Townhouse
-            "Villa": "3",                         //  3 Villa
-            "BlockOfUnits": "4",                  //  4 Block of units (?)
-            "RetirementLiving": "5"               //  5 Retirement living
+            "House": 0,                         //  0 House
+            "ApartmentAndUnit": 1,              //  1 Apartment and unit
+            "Townhouse": 2,                     //  2 Townhouse
+            "Villa": 3,                         //  3 Villa
+            "RetirementLiving": 4            //  4 Retirement living
         }
 
         return new Promise(async (resolve, reject) => {
             if (details) {
-                lms.addProperty(details.propertyId, parseInt(PropertyType[details.propertyType]), details.unitNumber, details.pincode, details.location, details.rooms, details.bathrooms, details.parking, details.initialAvailableDate, { from: address })
-                    .then(async (data) => {
+                details.dateOfPosting = new Date();
+                lms.vAddProperty(details.propertyId, details.location, details.dateOfPosting.toString(), true, PropertyType[details.propertyType], { from: address })
+                    .then(async (data, hash) => {
+                        console.log(data.tx)
+                        details.transactionHash = data.tx;
                         return data;
                     })
                     .catch(err => {
@@ -126,13 +207,14 @@ class PropertyService {
                         return reject(err)
                     })
                     .then((data) => {
+                        return lms.objGetNFTToken(details.propertyId, { from: address })
+                    }).then((data) => {
+                        console.log(data.toNumber())
                         var propertyModelInst = new PropertyModel();
-                        details.hash = data;
                         details._id = uuidv4();
+                        details.NFTTokenId = data.toNumber();
+                        details.ownerAddress = address;
                         return resolve(propertyModelInst.createProperty(details));
-                    })
-                    .then(()=>{
-                        return this.setRent(details.propertyId, details, address, lms)
                     })
                     .catch(err => {
                         console.log("error while creating property in db", err)
@@ -182,14 +264,24 @@ class PropertyService {
         })
     }
 
-    setRent(propertyId, details, address, lms) {
+    changeRent(propertyId, details, address) {
         var propertyModelInst = new PropertyModel();
         return new Promise(async (resolve, reject) => {
-            if (propertyId && details.securityDeposit && details.rentAmount && address) {
-                lms.setRent(propertyId, details.securityDeposit, details.rentAmount, { from: address })
+            if (propertyId && address && (details.rentAmount || details.securityDeposit)) {
+                let updateData = {};
+                if (details.rentAmount)
+                    updateData.rentAmount = details.rentAmount;
+                if (details.securityDeposit)
+                    updateData.securityDeposit = details.securityDeposit;
+
+                let property = await propertyModelInst.findProperty({ propertyId, availability: true })
+                if (!property || property.length <= 0) {
+                    console.log("Property not found or property is already rented")
+                    return reject("Property not found or property is already rented")
+                }
+                return propertyModelInst.updateProperty(propertyId, updateData)
                     .then(async (data) => {
-                        await propertyModelInst.updateProperty(propertyId, { rentAmount: details.rentAmount, securityDeposit: details.securityDeposit });
-                        resolve(data);
+                        return resolve(data);
                     })
                     .catch(err => {
                         console.log(err)
@@ -218,11 +310,12 @@ class PropertyService {
         })
     }
 
-    changeStatus(propertyId, address, status, lms) {
+    changeStatus(propertyId, status) {
+        var propertyModelInst = new PropertyModel();
         return new Promise(async (resolve, reject) => {
-            if (address && propertyId) {
+            if (propertyId) {
                 if (status === 'deactivate') {
-                    lms.deactivateProperty(propertyId, { from: address })
+                    return propertyModelInst.updateProperty(propertyId, { active: false })
                         .then(async (data) => {
                             resolve(data);
                         })
@@ -232,7 +325,7 @@ class PropertyService {
                         })
                 }
                 else if (status == 'activate') {
-                    lms.activateProperty(propertyId, { from: address })
+                    return propertyModelInst.updateProperty(propertyId, { active: true })
                         .then(async (data) => {
                             resolve(data);
                         })
