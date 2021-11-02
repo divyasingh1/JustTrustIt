@@ -8,9 +8,9 @@
 DB_URL= 'mongodb://localhost:27017/cryptorentals'
 ADMIN_ADDRESS = '<ADMIN_ADDRESS>'
 ```
-3. npm i
+3.``` npm i ```
 
-4. Run following command
+4. Run following command to setup ganache and deploy contract on truffle:
 ``` 
 npm i truffle -g
 truffle init
