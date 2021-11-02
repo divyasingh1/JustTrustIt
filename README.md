@@ -1,7 +1,8 @@
 # deployement
+
 1.Install mongodb and node js
 
-2. create .env file with following variables:
+2. Create .env file with following variables:
 
 ```
 DB_URL= 'mongodb://localhost:27017/cryptorentals'
