@@ -6,7 +6,7 @@
             "header": [
                 {
                     "name": "Authorization",
-                    "value": "71bade62-f12f-47c2-af8b-28cfdb6d4844"
+                    "value": "SECRET"
                 }
             ],
             "chainId": 20102021,
@@ -16,8 +16,8 @@
             "maxPriorityFeePerGas": "0xb2d05e00"
         },
         "wallet": {
-            "address": "0x28CbD506d22B28434815b5A3Dd4F99f17f542946",
-            "key": "9d66e4a528e39a92e18a1c4a1f375a2d96786d7a19d43dfae95903361d1355d7"
+            "address": "<ADDRESS>",
+            "key": "<KEY>"
         }
     },
     "solidity": {
@@ -47,7 +47,7 @@
         }
     },
     "args": [
-        "efewf","gfj"
+        "CryptoPro","CRP"
     ],
     "compilerVersion": "",
     "name": "TrustedProperty"

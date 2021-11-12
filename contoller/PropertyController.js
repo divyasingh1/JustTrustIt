@@ -12,7 +12,7 @@ router.use(bodyParser.json());
 const Web3 = require('web3');
 
 let config = {
-    "url": "https://dltestnet.dltlabs.com/api/3.3/",
+    "url": process.env.RPC_URL,
 
     "header": [
 
@@ -20,7 +20,7 @@ let config = {
 
             "name": "Authorization",
 
-            "value": "71bade62-f12f-47c2-af8b-28cfdb6d4844"
+            "value": process.env.PROJECT_SECRET
 
         }
 

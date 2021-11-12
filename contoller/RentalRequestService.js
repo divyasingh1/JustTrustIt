@@ -22,7 +22,7 @@ class RentalRequestService {
             let property = await propertyModelInst.findProperty({ propertyId: rentalRequest.propertyId });
 
             if (property.length <= 0) {
-                return reject("Property nt found");
+                return reject("Property not found");
             }
 
             if (rentalRequest.tenantAddress && rentalRequest.duration) {

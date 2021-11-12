@@ -36,7 +36,7 @@ module.exports = {
 
   networks: {
     development: {
-      url:     "http://71bade62-f12f-47c2-af8b-28cfdb6d4844:dltestnet@dlrpc.dltlabs.com/dltestnet",
+      url:     "URL",
       port: 8545,
       network_id: "*", //Match any network id
       gas: 6721975,
