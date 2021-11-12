@@ -4,19 +4,45 @@ var bodyParser = require('body-parser');
 var PropertyService = require('./PropertyService');
 var RentalRequestService = require('./RentalRequestService');
 
+var fs = require('fs');
+var path = require("path")
 router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 
+
 const Web3 = require('web3');
-const contract = require('truffle-contract');
-const artifacts = require('../build/TrustedProperty.json');
-if (typeof web3 !== 'undefined') {
-    var web3 = new Web3(web3.currentProvider)
-  } else {
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
+
+let config = {
+    "url": process.env.RPC_URL,
+
+    "header": [
+
+        {
+
+            "name": "Authorization",
+
+            "value": process.env.PROJECT_SECRET
+
+        }
+
+    ]
 }
-const LMS = contract(artifacts)
-LMS.setProvider(web3.currentProvider)
+
+let web3 = new Web3(new Web3.providers.HttpProvider(config.url,
+    {
+        headers: config.header
+    }
+));
+
+
+var parsed= JSON.parse(fs.readFileSync(path.join(__dirname,"../build/contract/TrustedProperty.json")));
+var abi = parsed.contracts['TrustedProperty.sol'].TrustedProperty.abi;
+const lms = new web3.eth.Contract(abi, process.env.CONTRACT_ADDRERSS);
+
+web3.eth.getBlockNumber().then((result) => {
+    console.log("Latest Ethereum Block is ", result);
+});
+
 
 
 router.get('/property/list', function (req, res) {
@@ -32,7 +58,6 @@ router.get('/property/list', function (req, res) {
 
 router.get('/property/:propertyId/:address',async function (req, res) {
     var propertyServiceInst = new PropertyService();
-    const lms = await LMS.deployed();
     return propertyServiceInst.getPropertyById(req.params.propertyId, req.params.address, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Property Fetched Successfully", data: data });
@@ -44,7 +69,6 @@ router.get('/property/:propertyId/:address',async function (req, res) {
 
 router.get('/property/isPropertyAvailable/:propertyId/:address',async function (req, res) {
     var propertyServiceInst = new PropertyService();
-    const lms = await LMS.deployed();
     return propertyServiceInst.isPropertyAvailable(req.params.propertyId, req.params.address, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Property Fetched Successfully", data: data });

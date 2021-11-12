@@ -1,0 +1,54 @@
+{
+    "config": {
+        "network": {
+            "url": "https://dltestnet.dltlabs.com/api/3.3/",
+            "timeout": 300000,
+            "header": [
+                {
+                    "name": "Authorization",
+                    "value": "SECRET"
+                }
+            ],
+            "chainId": 20102021,
+            "gasPrice": 0,
+            "gasLimit": 6000000,
+            "maxFeePerGas": "0xb2d05e00",
+            "maxPriorityFeePerGas": "0xb2d05e00"
+        },
+        "wallet": {
+            "address": "<ADDRESS>",
+            "key": "<KEY>"
+        }
+    },
+    "solidity": {
+        "language": "Solidity",
+        "sources": {},
+        "settings": {
+            "optimizer": {
+                "enabled": true
+            },
+            "evmVersion": "byzantium",
+            "outputSelection": {
+                "*": {
+                    "": [
+                        "legacyAST",
+                        "ast"
+                    ],
+                    "*": [
+                        "abi",
+                        "evm.bytecode.object",
+                        "evm.bytecode.sourceMap",
+                        "evm.deployedBytecode.object",
+                        "evm.deployedBytecode.sourceMap",
+                        "evm.gasEstimates"
+                    ]
+                }
+            }
+        }
+    },
+    "args": [
+        "CryptoPro","CRP"
+    ],
+    "compilerVersion": "",
+    "name": "TrustedProperty"
+}

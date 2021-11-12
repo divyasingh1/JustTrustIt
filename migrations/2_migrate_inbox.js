@@ -1,7 +1,7 @@
 
 var CProperties = artifacts.require("../contracts/TrustedProperty");
 
-var LibCommon = artifacts.require('../contracts/LibCommon')
+// var LibCommon = artifacts.require('../contracts/LibCommon')
 // var LibCommon = artifacts.require("./LibCommon");
 
 // module.exports =async (deployer) => {  
@@ -20,8 +20,7 @@ var LibCommon = artifacts.require('../contracts/LibCommon')
 //   });
 
 async function doDeploy(deployer, network) {
-       await deployer.deploy(LibCommon)
-       await deployer.link(LibCommon, [CProperties])
+
     await deployer.deploy(CProperties, "trustedp", "TRT")
 }
 
