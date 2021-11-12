@@ -1,3 +1,7 @@
+SET UP .env
+
+check sample env file for refernce
+
 
 # deployement using DL Unify
 
