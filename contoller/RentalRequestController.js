@@ -7,22 +7,46 @@ router.use(bodyParser.urlencoded({ extended: true }));
 router.use(bodyParser.json());
 
 const Web3 = require('web3');
-const contract = require('truffle-contract');
-const artifacts = require('../build/TrustedProperty.json');
-if (typeof web3 !== 'undefined') {
-    var web3 = new Web3(web3.currentProvider)
-  } else {
-    var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:8545'))
+var fs = require('fs');
+var path = require("path")
+router.use(bodyParser.urlencoded({ extended: true }));
+router.use(bodyParser.json());
+
+let config = {
+    "url": "https://dltestnet.dltlabs.com/api/3.3/",
+
+    "header": [
+
+        {
+
+            "name": "Authorization",
+
+            "value": "71bade62-f12f-47c2-af8b-28cfdb6d4844"
+
+        }
+
+    ]
 }
-const LMS = contract(artifacts)
-LMS.setProvider(web3.currentProvider)
-    //const lms = LMS.at(contract_address) for remote nodes deployed on ropsten or rinkeby
+
+let web3 = new Web3(new Web3.providers.HttpProvider(config.url,
+    {
+        headers: config.header
+    }
+));
+
+
+var parsed= JSON.parse(fs.readFileSync(path.join(__dirname,"../build/contract/TrustedProperty.json")));
+var abi = parsed.contracts['TrustedProperty.sol'].TrustedProperty.abi;
+const lms = new web3.eth.Contract(abi, process.env.CONTRACT_ADDRERSS);
+
+web3.eth.getBlockNumber().then((result) => {
+    console.log("Latest Ethereum Block is ", result);
+});
 
 router.patch('/:rentalRequestId',async function (req, res) {
     var rentalRequestServiceInst = new RentalRequestService();
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
-    const lms = await LMS.deployed();
     return rentalRequestServiceInst.updateRentalRequest(req.params.rentalRequestId, req.userId,  req.publicKey, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Rental request Approved successfully"});
@@ -51,7 +75,6 @@ router.post('/', function (req, res) {
 router.post('/burnRentAgreement/:contractId',async function (req, res) {
     var rentalRequestServiceInst = new RentalRequestService();
     req.userId = req.user.userId;
-    const lms = await LMS.deployed();
     return rentalRequestServiceInst.vBurnRentAgreement(req.params.contractId,lms, req.user.publicKey)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Rental request burned successfully",data});
@@ -65,7 +88,6 @@ router.patch('/extendContractDurationRequest/:contractId',async function (req, r
     var rentalRequestServiceInst = new RentalRequestService();
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
-    const lms = await LMS.deployed();
     return rentalRequestServiceInst.extendContractDurationRequest(req.userId,  req.publicKey, req.params.contractId,  req.body.extensionDuration, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Extend Contract Duration Request successful"});
@@ -80,7 +102,6 @@ router.patch('/extendContractDurationConfirm/:contractId',async function (req, r
     var rentalRequestServiceInst = new RentalRequestService();
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
-    const lms = await LMS.deployed();
     return rentalRequestServiceInst.extendContractDurationConfirm(req.userId,  req.publicKey, req.params.contractId,  req.body.extensionDuration, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Extend Contract Duration Request confirmed"});
@@ -94,7 +115,6 @@ router.get('/getPendingFunds', async function (req, res) {
     var rentalRequestServiceInst = new RentalRequestService();
     req.userId = req.user.userId;
     req.publicKey = req.user.publicKey;
-    const lms = await LMS.deployed();
     return rentalRequestServiceInst.getPendingFunds(req.userId, req.user.publicKey, lms)
         .then((data) => {
             res.send({ "status": "SUCCESS", message: "Got pending funds", data });

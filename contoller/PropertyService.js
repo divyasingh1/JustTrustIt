@@ -10,7 +10,7 @@ class PropertyService {
     async isPropertyAvailable(propertyId, address, lms) {
         return new Promise(async (resolve, reject) => {
             if (propertyId) {
-                lms.isPropertyAvailable(propertyId, { from: address })
+                lms.methods.isPropertyAvailable(propertyId).call({ from: address })
                     .then(async (data) => {
                         resolve(data);
                     })
@@ -33,7 +33,7 @@ class PropertyService {
                 }
                 var propertyModelInst = new PropertyModel();
                 let property = await propertyModelInst.findProperty({ propertyId: rentalRequest[0].propertyId });
-                lms.depositSecurity(contractId, { from: rentalRequest[0].tenantAddress, value: property[0].securityDeposit })
+                lms.methods.depositSecurity(contractId).send({ from: rentalRequest[0].tenantAddress, value: property[0].securityDeposit })
                     .then((data, _address) => {
                         return resolve(data);
                     })
@@ -106,13 +106,13 @@ class PropertyService {
                 if (property.length <= 0) {
                     return reject("Property not found for this contract");
                 }
-                lms.ADMIN()
+                lms.methods.ADMIN().call()
                     .then(async (data) => {
                         console.log(data, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress)
-                        return lms.approve(process.env.ADMIN_ADDRESS, property[0].NFTTokenId, { from: rentalRequest[0].ownerAddress })
+                        return lms.methods.approve(process.env.ADMIN_ADDRESS, property[0].NFTTokenId).send({ from: rentalRequest[0].ownerAddress })
                     })
                     .then(() => {
-                        return lms.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress, { from: process.env.ADMIN_ADDRESS })
+                        return lms.methods.bTransferFrom(rentalRequest[0].propertyId, rentalRequest[0].ownerAddress, rentalRequest[0].tenantAddress).send({ from: process.env.ADMIN_ADDRESS })
                     })
                     .then(async (data) => {
                         let rentDetails = {
@@ -157,7 +157,7 @@ class PropertyService {
         console.log(contractId, "contractId")
         return new Promise(async (resolve, reject) => {
             if (contractId) {
-                lms.objGetRentAgreement(contractId, { from: address })
+                lms.methods.objGetRentAgreement(contractId).send({ from: address })
                     .then(async (data) => {
                         let res = {
                             doesExist: true,
@@ -183,6 +183,7 @@ class PropertyService {
     }
 
     createProperty(userId, details, lms, address) {
+       
         details.userId = userId;
         details.propertyId = uuidv4();
         let PropertyType = {
@@ -196,7 +197,7 @@ class PropertyService {
         return new Promise(async (resolve, reject) => {
             if (details) {
                 details.dateOfPosting = new Date();
-                lms.vAddProperty(details.propertyId, details.location, details.dateOfPosting.toString(), true, PropertyType[details.propertyType], { from: address })
+                lms.methods.vAddProperty(details.propertyId, details.location, details.dateOfPosting.toString(), true, PropertyType[details.propertyType]).send({from:address})
                     .then(async (data, hash) => {
                         console.log(data.tx)
                         details.transactionHash = data.tx;
@@ -207,7 +208,7 @@ class PropertyService {
                         return reject(err)
                     })
                     .then((data) => {
-                        return lms.objGetNFTToken(details.propertyId, { from: address })
+                        return lms.methods.objGetNFTToken(details.propertyId).call({from:address})
                     }).then((data) => {
                         console.log(data.toNumber())
                         var propertyModelInst = new PropertyModel();
@@ -250,7 +251,7 @@ class PropertyService {
     getPropertyById(propertyId, address, lms) {
         return new Promise(async (resolve, reject) => {
             if (propertyId) {
-                lms.getProperty(propertyId, { from: address })
+                lms.methods.getProperty(propertyId).call({ from: address })
                     .then(async (data) => {
                         resolve(data);
                     })
@@ -296,7 +297,7 @@ class PropertyService {
     withdrawFunds(address, lms) {
         return new Promise(async (resolve, reject) => {
             if (address) {
-                lms.withdraw({ from: address })
+                lms.methods.withdraw().send({ from: address })
                     .then(async (data) => {
                         resolve(data);
                     })

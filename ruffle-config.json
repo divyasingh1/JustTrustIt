@@ -1,0 +1,54 @@
+{
+    "config": {
+        "network": {
+            "url": "https://dltestnet.dltlabs.com/api/3.3/",
+            "timeout": 300000,
+            "header": [
+                {
+                    "name": "Authorization",
+                    "value": "71bade62-f12f-47c2-af8b-28cfdb6d4844"
+                }
+            ],
+            "chainId": 20102021,
+            "gasPrice": 0,
+            "gasLimit": 6000000,
+            "maxFeePerGas": "0xb2d05e00",
+            "maxPriorityFeePerGas": "0xb2d05e00"
+        },
+        "wallet": {
+            "address": "0x28CbD506d22B28434815b5A3Dd4F99f17f542946",
+            "key": "9d66e4a528e39a92e18a1c4a1f375a2d96786d7a19d43dfae95903361d1355d7"
+        }
+    },
+    "solidity": {
+        "language": "Solidity",
+        "sources": {},
+        "settings": {
+            "optimizer": {
+                "enabled": true
+            },
+            "evmVersion": "byzantium",
+            "outputSelection": {
+                "*": {
+                    "": [
+                        "legacyAST",
+                        "ast"
+                    ],
+                    "*": [
+                        "abi",
+                        "evm.bytecode.object",
+                        "evm.bytecode.sourceMap",
+                        "evm.deployedBytecode.object",
+                        "evm.deployedBytecode.sourceMap",
+                        "evm.gasEstimates"
+                    ]
+                }
+            }
+        }
+    },
+    "args": [
+        "efewf","gfj"
+    ],
+    "compilerVersion": "",
+    "name": "TrustedProperty"
+}

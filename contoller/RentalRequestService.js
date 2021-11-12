@@ -26,7 +26,7 @@ class RentalRequestService {
             }
 
             if (rentalRequest.tenantAddress && rentalRequest.duration) {
-                await lms.vInitRentAgreement(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), rentalRequest.rentAmount, rentalRequest.securityDeposit, { from: publicKey })
+                await lms.methods.vInitRentAgreement(rentalRequest.contractId, rentalRequest.propertyId, rentalRequest.tenantAddress, rentalRequest.duration, property[0].initialAvailableDate.toString(), rentalRequest.rentAmount, rentalRequest.securityDeposit).send({ from: publicKey })
                     .then(async (hash) => {
                         await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId })
                         // await propertyModelInst.updateProperty(rentalRequest.propertyId, { availability: false, tenantUserId: rentalRequest.tenantUserId });
@@ -49,7 +49,7 @@ class RentalRequestService {
     async vBurnRentAgreement(contractId, lms, address) {
         return new Promise(async (resolve, reject) => {
             if (contractId) {
-                lms.vBurnRentAgreement(contractId, { from: address })
+                lms.methods.vBurnRentAgreement(contractId).send({ from: address })
                     .then(async (data) => {
                         resolve(data);
                     })
@@ -100,7 +100,7 @@ class RentalRequestService {
     extendContractDurationRequest(userId, address, contractId, extensionDuration, lms) {
         return new Promise(async (resolve, reject) => {
             if (address && contractId && extensionDuration) {
-                lms.extendContractDurationRequest(contractId, extensionDuration, { from: address })
+                lms.methods.extendContractDurationRequest(contractId, extensionDuration).send({ from: address })
                     .then(async (data) => {
                         resolve(data);
                     })
@@ -117,7 +117,7 @@ class RentalRequestService {
     extendContractDurationConfirm(userId, address, contractId, extensionDuration, lms) {
         return new Promise(async (resolve, reject) => {
             if (address && contractId && extensionDuration) {
-                lms.extendContractDurationConfirm(contractId, extensionDuration, { from: address })
+                lms.methods.extendContractDurationConfirm(contractId, extensionDuration).send({ from: address })
                     .then(async (data) => {
                         resolve(data);
                     })
@@ -134,7 +134,7 @@ class RentalRequestService {
     getPendingFunds(userId, address, lms) {
         return new Promise(async (resolve, reject) => {
             if (address) {
-                lms.getPendingFunds({ from: address })
+                lms.methods.getPendingFunds().call({ from: address })
                     .then(async (data) => {
                         return resolve(data);
                     })

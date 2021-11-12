@@ -1,0 +1,5 @@
+{
+    "status": false,
+    "error": "This contract object doesn't have address set yet, please set an address first.",
+    "stack": "Error: This contract object doesn't have address set yet, please set an address first.\n    at Object.ContractNoAddressDefinedError (C:\\Users\\erdiv\\AppData\\Roaming\\npm\\node_modules\\io.dltlabs.unify-cli\\node_modules\\web3-core-helpers\\lib\\errors.js:122:16)\n    at Object._processExecuteArguments (C:\\Users\\erdiv\\AppData\\Roaming\\npm\\node_modules\\io.dltlabs.unify-cli\\node_modules\\web3-eth-contract\\lib\\index.js:703:22)\n    at Object._executeMethod (C:\\Users\\erdiv\\AppData\\Roaming\\npm\\node_modules\\io.dltlabs.unify-cli\\node_modules\\web3-eth-contract\\lib\\index.js:719:68)\n    at C:\\Users\\erdiv\\AppData\\Roaming\\npm\\node_modules\\io.dltlabs.unify-cli\\ruffle\\invoke\\Invoke.js:135:29\n    at Array.forEach (<anonymous>)\n    at invokeContractMethod (C:\\Users\\erdiv\\AppData\\Roaming\\npm\\node_modules\\io.dltlabs.unify-cli\\ruffle\\invoke\\Invoke.js:131:9)\n    at processTicksAndRejections (internal/process/task_queues.js:97:5)"
+}
