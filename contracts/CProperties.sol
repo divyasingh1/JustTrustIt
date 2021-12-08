@@ -8,11 +8,11 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 library LibProperty {   
     
     enum PropertyType {
-        House,                         //  0 House
-        Apartment,                     //  1 Apartment
-        Townhouse,                     //  2 Townhouse
-        Villa,                         //  3 Villa
-        RetirementLiving               //  4 Retirement living
+        Bus,                         //  0 Bus
+        Van,                     //  1 Van
+        Car,                     //  2 Car
+        SUV,  //3 SUV
+        Ambulance                         //  3 Ambulance
     }
 
     struct Property {

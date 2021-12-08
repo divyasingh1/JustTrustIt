@@ -186,11 +186,11 @@ class PropertyService {
         details.userId = userId;
         details.propertyId = uuidv4();
         let PropertyType = {
-            "House": 0,                         //  0 House
-            "ApartmentAndUnit": 1,              //  1 Apartment and unit
-            "Townhouse": 2,                     //  2 Townhouse
-            "Villa": 3,                         //  3 Villa
-            "RetirementLiving": 4            //  4 Retirement living
+            "Bus": 0,                         //  0 Bus
+            "Van": 1,              //  1 Van
+            "Car": 2,                     //  2 Car
+            "SUV": 3,
+            "Ambulance":4                     
         }
 
         return new Promise(async (resolve, reject) => {
