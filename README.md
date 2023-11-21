@@ -26,3 +26,5 @@ npm run start
 ```
 **Backend service will be up on:**
 base url: http://localhost:8082
+
+npm version- 9.4.0
